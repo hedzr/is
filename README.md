@@ -1,6 +1,14 @@
 # is
 
+
+[![Go](https://github.com/hedzr/is/actions/workflows/go.yml/badge.svg)](https://github.com/hedzr/is/actions/workflows/go.yml)
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/hedzr/is.svg?label=release)](https://github.com/hedzr/is/releases)
+[![go.dev](https://img.shields.io/badge/go-dev-green)](https://pkg.go.dev/github.com/hedzr/is)
+
+
 `is` provides a set of detectors for the environment checking.
+
+<kbd>pre-release</kbd>
 
 ## Features
 
