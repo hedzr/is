@@ -37,6 +37,7 @@ import (
 func main() {
 	println(is.InTesting())
 	println(is.Env().GetDebugLevel())
+
 	fmt.Printf("%v", color.GetCPT().Translate(`<code>code</code> | <kbd>CTRL</kbd>
 	<b>bold / strong / em</b>
 	<i>italic / cite</i>
@@ -113,14 +114,14 @@ The test codes:
 
 ```go
 func TestGetCPT(t *testing.T) {
-	t.Logf("%v", GetCPT().Translate(`<code>code</code> | <kbd>CTRL</kbd>
+t.Logf("%v", GetCPT().Translate(`<code>code</code> | <kbd>CTRL</kbd>
 	<b>bold / strong / em</b>
 	<i>italic / cite</i>
 	<u>underline</u>
 	<mark>inverse mark</mark>
 	<del>strike / del </del>
 	<font color="green">green text</font>
-	`, FgDefault))
+    `, FgDefault))
 }
 ```
 
@@ -132,25 +133,25 @@ And more:
 
 ```go
 func TestStripLeftTabs(t *testing.T) {
-	t.Logf("%v", StripLeftTabs(`
+t.Logf("%v", StripLeftTabs(`
 	
 		<code>code</code>
 	NC Cool
 	 But it's tight.
 	  Hold On!
 	Hurry Up.
-	`))
+    `))
 }
 
 func TestStripHTMLTags(t *testing.T) {
-	t.Logf("%v", StripHTMLTags(`
+t.Logf("%v", StripHTMLTags(`
 	
 		<code>code</code>
 	NC Cool
 	 But it's tight.
 	  Hold On!
 	Hurry Up.
-	`))
+    `))
 }
 
 ```
@@ -163,7 +164,7 @@ func TestStripHTMLTags(t *testing.T) {
 
 ## Contributions
 
-Kindly welcome, please issue me first for keep this repo smaller.
+Kindly welcome, please issue me first for keeping this repo smaller.
 
 ## License
 
