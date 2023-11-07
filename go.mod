@@ -11,6 +11,7 @@ go 1.21
 require (
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3
 	golang.org/x/crypto v0.14.0
+	golang.org/x/net v0.10.0
 	golang.org/x/sys v0.14.0
 )
 
