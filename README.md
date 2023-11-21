@@ -94,6 +94,9 @@ The partials:
   - ReadPassword
   - GetTtySize
 
+- [Special] Terminal / Color
+	- escaping tools: GetCPT()/GetCPTC()/GetCPTNC()
+	- Highlight, Dimf, Text, Dim, ToDim, ToHighlight, ToColor, ...
 
 ### Buildtags
 
@@ -106,22 +109,22 @@ Some functions want special buildtags presented. These are including:
 - docker: See DockerBuild
 - ...
 
-
-
-### Colorizers
+### Colorizes
 
 The test codes:
 
 ```go
+import "github.com/hedzr/is/term/color"
+
 func TestGetCPT(t *testing.T) {
-t.Logf("%v", GetCPT().Translate(`<code>code</code> | <kbd>CTRL</kbd>
+t.Logf("%v", color.GetCPT().Translate(`<code>code</code> | <kbd>CTRL</kbd>
 	<b>bold / strong / em</b>
 	<i>italic / cite</i>
 	<u>underline</u>
 	<mark>inverse mark</mark>
 	<del>strike / del </del>
 	<font color="green">green text</font>
-    `, FgDefault))
+    `, color.FgDefault))
 }
 ```
 
@@ -133,7 +136,7 @@ And more:
 
 ```go
 func TestStripLeftTabs(t *testing.T) {
-t.Logf("%v", StripLeftTabs(`
+t.Logf("%v", color.StripLeftTabs(`
 	
 		<code>code</code>
 	NC Cool
@@ -144,7 +147,7 @@ t.Logf("%v", StripLeftTabs(`
 }
 
 func TestStripHTMLTags(t *testing.T) {
-t.Logf("%v", StripHTMLTags(`
+t.Logf("%v", color.StripHTMLTags(`
 	
 		<code>code</code>
 	NC Cool
@@ -153,10 +156,9 @@ t.Logf("%v", StripHTMLTags(`
 	Hurry Up.
     `))
 }
-
 ```
 
-
+...
 
 
 
