@@ -124,6 +124,7 @@ func (c *cpTranslator) translateTo(root *html.Node, source string, initialState 
 		"u":    colorizeIt(BgUnderline),
 		"mark": colorizeIt(BgInverse),
 		"del":  colorizeIt(BgStrikeout),
+		"dim":  colorizeIt(BgDim),
 	}
 
 	walker = func(node *html.Node, level int) {
