@@ -52,9 +52,9 @@ var dummy dummyS
 type dummyS struct{}
 
 func (dummyS) Translate(s string, initialFg Color) string        { return s }
-func (dummyS) ColoredFast(out io.Writer, clr Color, text string) { out.Write([]byte(text)) }
-func (dummyS) DimFast(out io.Writer, text string)                { out.Write([]byte(text)) }
-func (dummyS) HighlightFast(out io.Writer, text string)          { out.Write([]byte(text)) }
+func (dummyS) ColoredFast(out io.Writer, clr Color, text string) { _, _ = out.Write([]byte(text)) }
+func (dummyS) DimFast(out io.Writer, text string)                { _, _ = out.Write([]byte(text)) }
+func (dummyS) HighlightFast(out io.Writer, text string)          { _, _ = out.Write([]byte(text)) }
 
 type cpTranslator struct {
 	noColorMode bool // strip color code simply
