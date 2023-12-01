@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"log/slog"
 	"strconv"
 	"strings"
 	"sync"
@@ -34,6 +35,9 @@ func GetCPTNC() Translator {
 	return &cptNC
 }
 
+func ToColorString(clr Color) string { return cpt.toColorString(clr) }
+func ToColorInt(s string) Color      { return cpt.ToColorInt(s) }
+
 // Translator _
 type Translator interface {
 	Translate(s string, initialFg Color) string
@@ -43,9 +47,13 @@ type Translator interface {
 	ColoredFast(out io.Writer, clr Color, text string)
 	DimFast(out io.Writer, text string)
 	HighlightFast(out io.Writer, text string)
+
+	WriteColor(out io.Writer, clr Color)
+	WriteBgColor(out io.Writer, clr Color)
+	Reset(out io.Writer)
 }
 
-func GetDummyTranslator() Translator { return dummy }
+func GetDummyTranslator() Translator { return dummy } // return Translator for displaying plain text without color
 
 var dummy dummyS
 
@@ -55,6 +63,9 @@ func (dummyS) Translate(s string, initialFg Color) string        { return s }
 func (dummyS) ColoredFast(out io.Writer, clr Color, text string) { _, _ = out.Write([]byte(text)) }
 func (dummyS) DimFast(out io.Writer, text string)                { _, _ = out.Write([]byte(text)) }
 func (dummyS) HighlightFast(out io.Writer, text string)          { _, _ = out.Write([]byte(text)) }
+func (dummyS) WriteColor(out io.Writer, clr Color)               {}
+func (dummyS) WriteBgColor(out io.Writer, clr Color)             {}
+func (dummyS) Reset(out io.Writer)                               {}
 
 type cpTranslator struct {
 	noColorMode bool // strip color code simply
@@ -154,6 +165,7 @@ func (c *cpTranslator) translateTo(root *html.Node, source string, initialState 
 			default:
 				// Logger.Debugf("%v, %v, lvl #%d\n", node.Type, node.Data, level)
 				// sb.WriteString(node.Data)
+				slog.Debug("default node", "data", node.Data)
 			}
 		case html.TextNode:
 			// Logger.Debugf("%v, %v, lvl #%d\n", node.Type, node.Data, level)
@@ -161,6 +173,7 @@ func (c *cpTranslator) translateTo(root *html.Node, source string, initialState 
 			return
 		default:
 			// sb.WriteString(node.Data)
+			slog.Debug("default node", "data", node.Data)
 		}
 
 		for child := node.FirstChild; child != nil; child = child.NextSibling {
@@ -382,8 +395,11 @@ func (c *cpTranslator) HighlightFast(out io.Writer, text string) {
 	WrapHighlightTo(out, text)
 }
 
-func (c *cpTranslator) color(out io.Writer, clr Color) { echoColor(out, clr) }
-func (c *cpTranslator) resetColor(out io.Writer)       { echoResetColor(out) }
+func (c *cpTranslator) WriteBgColor(out io.Writer, clr Color) { echoBg(out, clr) }
+func (c *cpTranslator) WriteColor(out io.Writer, clr Color)   { echoColor(out, clr) }
+func (c *cpTranslator) Reset(out io.Writer)                   { echoResetColor(out) }
+func (c *cpTranslator) color(out io.Writer, clr Color)        { echoColor(out, clr) }
+func (c *cpTranslator) resetColor(out io.Writer)              { echoResetColor(out) }
 
 func echoColor(out io.Writer, clr Color) {
 	// _, _ = fmt.Fprintf(os.Stdout, "\x1b[%dm", c)
@@ -394,9 +410,15 @@ func echoColor(out io.Writer, clr Color) {
 
 func echoColorAndBg(out io.Writer, clr, bg Color) {
 	// _, _ = fmt.Fprintf(os.Stdout, "\x1b[%dm", c)
-	_, _ = out.Write([]byte("\x1b["))
-	_, _ = out.Write([]byte(strconv.Itoa(int(clr))))
-	_, _ = out.Write([]byte{'m'})
+	if clr != NoColor {
+		_, _ = out.Write([]byte("\x1b["))
+		_, _ = out.Write([]byte(strconv.Itoa(int(clr))))
+		_, _ = out.Write([]byte{'m'})
+	}
+	echoBg(out, bg)
+}
+
+func echoBg(out io.Writer, bg Color) {
 	if bg != NoColor {
 		_, _ = out.Write([]byte("\x1b["))
 		_, _ = out.Write([]byte(strconv.Itoa(int(bg))))
@@ -409,7 +431,7 @@ func echoResetColor(out io.Writer) { //nolint:unused //no
 	_, _ = out.Write([]byte("\x1b[0m"))
 }
 
-func (c *cpTranslator) toColorInt(s string) Color {
+func (c *cpTranslator) onceInit() {
 	onceoptCM.Do(func() {
 		cptCM = map[string]Color{
 			"black":     FgBlack,
@@ -429,7 +451,27 @@ func (c *cpTranslator) toColorInt(s string) Color {
 			"lightcyan": FgLightCyan, "light-cyan": FgLightCyan,
 			"white": FgWhite,
 		}
+		cptNM = make(map[Color]string)
+		for k, v := range cptCM {
+			cptNM[v] = k
+		}
 	})
+}
+
+func (c *cpTranslator) ToColorString(clr Color) string { return c.toColorString(clr) }
+
+func (c *cpTranslator) toColorString(clr Color) string {
+	c.onceInit()
+	if ss, ok := cptNM[clr]; ok {
+		return ss
+	}
+	return "gray"
+}
+
+func (c *cpTranslator) ToColorInt(s string) Color { return c.toColorInt(s) }
+
+func (c *cpTranslator) toColorInt(s string) Color {
+	c.onceInit()
 	if i, ok := cptCM[strings.ToLower(s)]; ok {
 		return Color(i)
 	}
@@ -444,6 +486,7 @@ const (
 var (
 	onceoptCM sync.Once
 	cptCM     map[string]Color
+	cptNM     map[Color]string
 
 	// cptHTM    map[string]func(node *html.Node, level int)
 
