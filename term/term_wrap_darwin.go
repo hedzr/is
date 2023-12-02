@@ -1,7 +1,5 @@
-//go:build (dragonfly || freebsd || linux || netbsd || openbsd || aix || arm_linux || solaris) && !nacl && !plan9
-// +build dragonfly freebsd linux netbsd openbsd aix arm_linux solaris
-// +build !nacl
-// +build !plan9
+//go:build darwin
+// +build darwin
 
 // Copyright © 2020 Hedzr Yeh.
 
@@ -10,6 +8,7 @@ package term
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"syscall"
 	"unsafe"
 
@@ -62,18 +61,18 @@ func GetTtySize() (cols, rows int) {
 
 	// out := os.Stdout.Fd()
 
-	// var err error
-	// var outf *os.File
-	// outf, err = os.OpenFile("/dev/tty", os.O_WRONLY, 0)
-	// if err != nil {
-	// 	slog.Error("err", "err", err)
-	// 	return
-	// }
-	// defer outf.Close()
-	// out := outf.Fd()
+	var err error
+	var outf *os.File
+	outf, err = os.OpenFile("/dev/tty", os.O_WRONLY, 0)
+	if err != nil {
+		slog.Error("err", "err", err)
+		return
+	}
+	defer outf.Close()
+	out := outf.Fd()
 
 	res, _, errno := syscall.Syscall(syscall.SYS_IOCTL, //nolint:dogsled //like it
-		uintptr(syscall.Stdin),
+		uintptr(out),
 		uintptr(syscall.TIOCGWINSZ),
 		uintptr(unsafe.Pointer(&sz)))
 	if int(res) == -1 {
