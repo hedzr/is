@@ -8,8 +8,6 @@
 
 `is` provides a set of detectors for the environment checking.
 
-<kbd>pre-release</kbd>
-
 ## Features
 
 - `Env()` holds a global struct for CLI app basic states, such as: verbose/quiet/debug/trace....
