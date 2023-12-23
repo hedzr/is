@@ -212,7 +212,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"sync"
 
@@ -221,53 +220,49 @@ import (
 	logz "github.com/hedzr/logg/slog"
 )
 
+
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	logger := logz.New("new-dns")
-	server := net.NewServer(":7099",
-		net.WithServerLogger(logger.WithSkip(1)),
-		net.WithServerHandlerFunc(func(ctx context.Context, w net.Response, r net.Request) (processed bool, err error) {
-			// write your own reading incoming data loop, handle ctx.Done to stop loop.
-			// w.WrChannel() <- []byte{}
-			return
-		}),
-		net.WithServerOnProcessData(func(data []byte, w net.Response, r net.Request) (nn int, err error) {
-			logz.Debug("[server] RECEIVED:", "data", string(data), "client.addr", w.RemoteAddr())
-			nn = len(data)
-			return
-		}),
-	)
+	server := net.NewServer(":7099", net.WithServerOnListening(func(ss net.Server, l stdnet.Listener) {
+		go runClient(ctx, ss, l)
+	}))
 	defer server.Close()
 
 	catcher := is.Signals().Catch()
 	catcher.
-		WithVerboseFn(func(msg string, args ...any) {
-			logger.WithSkip(2).Verbose(fmt.Sprintf("[verbose] %s", fmt.Sprintf(msg, args...)))
-		}).
+		// WithVerboseFn(func(msg string, args ...any) {
+		// 	logz.WithSkip(2).Verbose(fmt.Sprintf("[verbose] %s", fmt.Sprintf(msg, args...)))
+		// }).
 		WithOnSignalCaught(func(sig os.Signal, wg *sync.WaitGroup) {
 			println()
-			logger.Debug("signal caught", "sig", sig)
+			logz.Debug("signal caught", "sig", sig)
 			if err := server.Shutdown(); err != nil {
-				logger.Error("server shutdown error", "err", err)
+				logz.Error("server shutdown error", "err", err)
 			}
 			cancel()
 		}).
 		Wait(func(stopChan chan<- os.Signal, wgShutdown *sync.WaitGroup) {
-			// logger.Debug("entering looper's loop...")
+			logz.Debug("entering looper's loop...")
 
-			go func() {
-				server.WithOnShutdown(func(err error, ss net.Server) { wgShutdown.Done() })
-				err := server.ListenAndServe(ctx, nil)
-				if err != nil {
-					logger.Fatal("server serve failed", "err", err)
-				}
-			}()
+			server.WithOnShutdown(func(err error, ss net.Server) { wgShutdown.Done() })
+			err := server.ListenAndServe(ctx, nil)
+			if err != nil {
+				logz.Fatal("server serve failed", "err", err)
+			}
 		})
 }
 
-// ...
+func runClient(ctx context.Context, ss net.Server, l stdnet.Listener) {
+	c := net.NewClient()
+
+	if err := c.Dial("tcp", ":7099"); err != nil {
+		logz.Fatal("connecting to server failed", "err", err, "server-endpoint", ":7099")
+	}
+	logz.Info("[client] connected", "server.addr", c.RemoteAddr())
+	c.RunDemo(ctx)
+}
 ```
 
 > some packages has stayed in progress so the above codes is just a skeleton.
