@@ -124,7 +124,7 @@ type Catcher interface {
 	WithOnSignalCaught(cb ...OnSignalCaught) Catcher
 	WithOnLoop(cb ...OnLooper) Catcher
 	WithVerboseFn(cb func(msg string, args ...any)) Catcher
-	// Wait get the current thread blocked on reading done chan till a os
+	// Wait get the current thread blocked on reading done channel till a os
 	// signal break it.
 	//
 	// You may send a signal (commonly like os.Interrupt) to stopChan to stop
@@ -137,14 +137,24 @@ type OnLooper func(stopChan chan<- os.Signal, wgShutdown *sync.WaitGroup)
 
 type catsig struct {
 	signals        []os.Signal
-	closers        []Peripheral
+	closers        c
 	onCaught       []OnSignalCaught
 	looperHandlers []OnLooper
 	msg            string
 }
 
+func (s *catsig) Close() {
+	verbose("closing catsig.closers...")
+	s.closers.Close()
+}
+
 func (s *catsig) WithCloseHandlers(onFinish ...Peripheral) Catcher {
-	s.closers = append(s.closers, onFinish...)
+	s.closers.RegisterPeripheral(onFinish...)
+	return s
+}
+
+func (s *catsig) WithClosable(onFinish ...Closable) Catcher {
+	s.closers.RegisterClosable(onFinish...)
 	return s
 }
 
@@ -183,6 +193,9 @@ func (s *catsig) WithVerboseFn(cb func(msg string, args ...any)) Catcher {
 }
 
 func (s *catsig) Wait(looperHandlerS ...OnLooper) {
+	defer Close()
+	defer s.Close()
+
 	s.looperHandlers = append(s.looperHandlers, looperHandlerS...)
 
 	var wgInitialized sync.WaitGroup
@@ -190,18 +203,13 @@ func (s *catsig) Wait(looperHandlerS ...OnLooper) {
 
 	var closed int32
 	done := make(chan struct{})
-	defer func() {
-		verbose("closing onFinish...")
-		for _, f := range s.closers {
-			f.Close()
-		}
-		verbose("closing registered closers...")
-		closers.Close()
+	shutDone := func() {
 		if atomic.CompareAndSwapInt32(&closed, 0, 1) {
 			verbose("closing done chan finally...")
 			close(done)
 		}
-	}()
+	}
+	defer shutDone()
 
 	c := make(chan os.Signal, 8) // allow buffering some signals
 	signals := s.signals

@@ -71,6 +71,18 @@ func (s *c) RegisterClosers(cc ...Closer) {
 	}
 }
 
+func (s *c) Close() {
+	if atomic.CompareAndSwapInt32(&s.closed, 0, 1) {
+		verbose("closing registered closers...")
+		for _, c := range s.closers {
+			// log.Debugf("  c.Close(), %v", c)
+			if c != nil {
+				c.Close()
+			}
+		}
+	}
+}
+
 type cw struct {
 	cc Closer
 }
@@ -102,16 +114,5 @@ type cf struct {
 func (s *cf) Close() {
 	if s.fn != nil {
 		s.fn()
-	}
-}
-
-func (s *c) Close() {
-	if atomic.CompareAndSwapInt32(&s.closed, 0, 1) {
-		for _, c := range s.closers {
-			// log.Debugf("  c.Close(), %v", c)
-			if c != nil {
-				c.Close()
-			}
-		}
 	}
 }
