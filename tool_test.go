@@ -40,3 +40,26 @@ func TestTtyFunctions(t *testing.T) {
 	x, y := GetTtySize()
 	t.Logf("%v, %v", x, y)
 }
+
+func TestFileExists(t *testing.T) {
+	tmpFile, err := os.CreateTemp(os.TempDir(), "1*.log")
+	if err != nil {
+		t.Error(err)
+	}
+	defer tmpFile.Close()
+	defer os.Remove(tmpFile.Name())
+	_, err = tmpFile.Write([]byte("OK\r\n"))
+	if err != nil {
+		t.Error(err)
+	}
+	tmpFile.Close()
+
+	if !FileExists(tmpFile.Name()) {
+		t.Fatalf("expecting temp file is existed: %q", tmpFile.Name())
+	}
+	if c, err := ReadFile(tmpFile.Name()); err != nil {
+		t.Error(err)
+	} else if string(c) != "OK\r\n" {
+		t.Fatalf("file content unmatched. read: %v", c)
+	}
+}

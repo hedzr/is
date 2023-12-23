@@ -22,6 +22,9 @@ import (
 // 	return string(b)
 // }
 
+// FileExists detects if a file or a directory is existed.
+func FileExists(filepath string) bool { return fileExists(filepath) }
+
 // fileExists returns the existence of an directory or file
 func fileExists(filepath string) bool {
 	if _, err := os.Stat(os.ExpandEnv(filepath)); err != nil {
@@ -32,7 +35,11 @@ func fileExists(filepath string) bool {
 	return true
 }
 
+// ReadFile reads the file named by filename and returns the contents.
+func ReadFile(filename string) ([]byte, error) { return readFile(filename) }
+
 // readFile reads the file named by filename and returns the contents.
+//
 // A successful call returns err == nil, not err == EOF. Because ReadFile
 // reads the whole file, it does not treat an EOF from Read as an error
 // to be reported.
