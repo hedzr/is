@@ -17,8 +17,9 @@
 - `ColoredTty() bool`, ....
 - Terminal colorizers
 - stringtool: `RandomStringPure`
+- basics: closable, closer, signals
 
-To using environ detecting utilities better and smoother, some terminal (and stringtool) tools are bundle together.
+To using environ detecting utilities better and smoother, some terminal (and stringtool, basics) tools are bundled together.
 
 ## Usages
 
@@ -29,10 +30,13 @@ import (
 	"fmt"
 
 	"github.com/hedzr/is"
+	"github.com/hedzr/is/basics"
 	"github.com/hedzr/is/term/color"
 )
 
 func main() {
+	defer basics.Close()
+
 	println(is.InTesting())
 	println(is.Env().GetDebugLevel())
 
@@ -93,8 +97,14 @@ The partials:
   - GetTtySize
 
 - [Special] Terminal / Color
-	- escaping tools: GetCPT()/GetCPTC()/GetCPTNC()
-	- Highlight, Dimf, Text, Dim, ToDim, ToHighlight, ToColor, ...
+  - escaping tools: GetCPT()/GetCPTC()/GetCPTNC()
+  - Highlight, Dimf, Text, Dim, ToDim, ToHighlight, ToColor, ...
+
+- Basics
+  - Peripheral, Closable, Closer
+  - RegisterClosable
+  - RegisterClosers
+  - RegisterCloseFns
 
 ### Buildtags
 
@@ -156,8 +166,111 @@ t.Logf("%v", color.StripHTMLTags(`
 }
 ```
 
-...
+### Basics (Closers)
 
+The `Closers()` collects all closable objects and allow shutting down them at once.
+
+```go
+package main
+
+import (
+	"os"
+
+	"github.com/hedzr/is/basics"
+)
+
+type redisHub struct{}
+
+func (s *redisHub) Close() {
+    // close the connections to redis servers
+    println("redis connections closed")
+}
+
+func main() {
+    defer basics.Close()
+
+    tmpFile, _ := os.CreateTemp(os.TempDir(), "1*.log")
+    basics.RegisterClosers(tmpFile)
+
+    basics.RegisterCloseFn(func() {
+        // do some shutdown operations here
+        println("close single functor")
+    })
+
+    basics.RegisterPeripheral(&redisHub{})
+}
+```
+
+### Basics (Signals)
+
+`Signals()` could catch os signals and entering a infinite loop.
+
+For example, a tcp server could be:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"sync"
+
+	"github.com/hedzr/go-socketlib/net"
+	"github.com/hedzr/is"
+	logz "github.com/hedzr/logg/slog"
+)
+
+func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	logger := logz.New("new-dns")
+	server := net.NewServer(":7099",
+		net.WithServerLogger(logger.WithSkip(1)),
+		net.WithServerHandlerFunc(func(ctx context.Context, w net.Response, r net.Request) (processed bool, err error) {
+			// write your own reading incoming data loop, handle ctx.Done to stop loop.
+			// w.WrChannel() <- []byte{}
+			return
+		}),
+		net.WithServerOnProcessData(func(data []byte, w net.Response, r net.Request) (nn int, err error) {
+			logz.Debug("[server] RECEIVED:", "data", string(data), "client.addr", w.RemoteAddr())
+			nn = len(data)
+			return
+		}),
+	)
+	defer server.Close()
+
+	catcher := is.Signals().Catch()
+	catcher.
+		WithVerboseFn(func(msg string, args ...any) {
+			logger.WithSkip(2).Verbose(fmt.Sprintf("[verbose] %s", fmt.Sprintf(msg, args...)))
+		}).
+		WithOnSignalCaught(func(sig os.Signal, wg *sync.WaitGroup) {
+			println()
+			logger.Debug("signal caught", "sig", sig)
+			if err := server.Shutdown(); err != nil {
+				logger.Error("server shutdown error", "err", err)
+			}
+			cancel()
+		}).
+		Wait(func(stopChan chan<- os.Signal, wgShutdown *sync.WaitGroup) {
+			// logger.Debug("entering looper's loop...")
+
+			go func() {
+				server.WithOnShutdown(func(err error, ss net.Server) { wgShutdown.Done() })
+				err := server.ListenAndServe(ctx, nil)
+				if err != nil {
+					logger.Fatal("server serve failed", "err", err)
+				}
+			}()
+		})
+}
+
+// ...
+```
+
+> some packages has stayed in progress so the above codes is just a skeleton.
 
 
 
