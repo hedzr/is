@@ -225,9 +225,13 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	server := net.NewServer(":7099", net.WithServerOnListening(func(ss net.Server, l stdnet.Listener) {
-		go runClient(ctx, ss, l)
-	}))
+	logger := logz.New("new-dns")
+	server := net.NewServer(":7099",
+		net.WithServerOnListening(func(ss net.Server, l stdnet.Listener) {
+			go runClient(ctx, ss, l)
+		}),
+		net.WithServerLogger(logger.WithSkip(1)),
+	)
 	defer server.Close()
 
 	catcher := is.Signals().Catch()
@@ -265,7 +269,7 @@ func runClient(ctx context.Context, ss net.Server, l stdnet.Listener) {
 }
 ```
 
-> some packages has stayed in progress so the above codes is just a skeleton.
+> some packages has stayed in progress so the above codes is just a skeleton (from go-socketlib/_examples/new-loop/main.go/v1).
 
 
 
