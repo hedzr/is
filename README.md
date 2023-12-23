@@ -220,7 +220,6 @@ import (
 	logz "github.com/hedzr/logg/slog"
 )
 
-
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
