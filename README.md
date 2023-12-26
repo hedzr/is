@@ -105,17 +105,19 @@ The partials:
   - RegisterClosable
   - RegisterClosers
   - RegisterCloseFns
+  - `is.Signals().Catcher()`
 
-### Buildtags
+### Build Tags
 
 Some functions want special buildtags presented. These are including:
 
-- verbose: See VerboseBuild, ...
-- delve: See DebugBuild, ...
-- k8s: See K8sBuild
-- istio: See IstioBuild
-- docker: See DockerBuild
+- `verbose`: See VerboseBuild, ...
+- `delve`: See DebugBuild, ...
+- `k8s`: See K8sBuild
+- `istio`: See IstioBuild
+- `docker`: See DockerBuild
 - ...
+- `buildtags.IsBuildTagExists(tag) bool`
 
 ### Colorizes
 
