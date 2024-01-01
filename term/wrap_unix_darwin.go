@@ -6,7 +6,7 @@
 package term
 
 import (
-	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"syscall"
@@ -87,7 +87,7 @@ func getFdSize(fd uintptr) (cols, rows int, err error) {
 		uintptr(syscall.TIOCGWINSZ),
 		uintptr(unsafe.Pointer(&sz)))
 	if int(res) == -1 {
-		err = errors.New("[getTtySize] cannot get terminal size. res = %v, err = %v", res, errno.Error())
+		err = fmt.Errorf("[getTtySize] cannot get terminal size. res = %v, err = %v", res, errno.Error())
 		// slog.Error("[GetTtySize] cannot get terminal size", "err", err)
 	}
 	cols, rows = int(sz.cols), int(sz.rows)
