@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"golang.org/x/crypto/ssh/terminal"
-	"golang.org/x/sys/unix"
 	"golang.org/x/term"
 
 	"github.com/hedzr/is/stringtool"
@@ -72,12 +71,12 @@ func testIsTerminal(t *testing.T) {
 
 	// _, err := unix.IoctlGetWinsize(int(os.Stdout.Fd()), unix.TIOCGWINSZ)
 	// _, err := unix.IoctlGetWinsize(int(os.Stdout.Fd()), ioctlReadTermios)
-	_, err := unix.IoctlGetTermios(int(os.Stdout.Fd()), unix.TIOCGETA)
-	if err != nil {
-		fmt.Println("Hello World")
-	} else {
-		fmt.Println("\033[1;34mHello World!\033[0m")
-	}
+	// _, err := unix.IoctlGetTermios(int(os.Stdout.Fd()), unix.TIOCGETA)
+	// if err != nil {
+	// 	fmt.Println("Hello World")
+	// } else {
+	// 	fmt.Println("\033[1;34mHello World!\033[0m")
+	// }
 
 	t.Log("------------")
 
