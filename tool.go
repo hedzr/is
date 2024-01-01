@@ -2,6 +2,8 @@ package is
 
 import (
 	"os"
+
+	"github.com/hedzr/is/term"
 )
 
 // func RandomStringPure(length int) (result string) {
@@ -47,4 +49,14 @@ func ReadFile(filename string) ([]byte, error) { return readFile(filename) }
 // As of Go 1.16, this function simply calls os.ReadFile.
 func readFile(filename string) ([]byte, error) {
 	return os.ReadFile(filename)
+}
+
+// ToBool converts a value (int, bool, string) to boolean
+func ToBool(val any, defaultVal ...bool) (ret bool) {
+	return term.ToBool(val, defaultVal...)
+}
+
+// StringToBool converts a string to boolean value.
+func StringToBool(val string, defaultVal ...bool) (ret bool) {
+	return term.StringToBool(val, defaultVal...)
 }
