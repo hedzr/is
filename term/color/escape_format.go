@@ -190,7 +190,7 @@ func (c *cpTranslator) _sz(s string) string {
 }
 
 func (c *cpTranslator) _ss(s string) string {
-	if term.IsTtyEscaped(s) {
+	if term.IsAnsiEscaped(s) {
 		clean := term.StripEscapes(s)
 		return c.stripHTMLTags(clean)
 	}
