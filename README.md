@@ -10,13 +10,13 @@
 
 ## Features
 
-- `Env()` holds a global struct for CLI app basic states, such as: verbose/quiet/debug/trace....
-- `InDebugging()`, `InTesting()`, and `InTracing()`, ....
-- `DebugBuild()`
-- `K8sBuild()`, `DockerBuild()`, ....
-- `ColoredTty() bool`, ....
-- Terminal colorizers
-- stringtool: `RandomStringPure`
+- `is.Env()` holds a global struct for CLI app basic states, such as: verbose/quiet/debug/trace....
+- `is.InDebugging() bool`, `is.InTesting() bool`, and `is.InTracing() bool`, ....
+- `is.DebugBuild() bool`
+- `is.K8sBuild() bool`, `is.DockerBuild() bool`, ....
+- `is.ColoredTty() bool`, ....
+- Terminal Colorizer, Detector, unescape tool
+- stringtool: `RandomStringPure`, ...
 - basics: closable, closer, signals
 
 To using environ detecting utilities better and smoother, some terminal (and stringtool, basics) tools are bundled together.
@@ -57,23 +57,27 @@ Result got:
 
 ### Lists
 
+```go
+is.Terminal(os.Stdout)
+```
 The partials:
 
-- InDebugging / InDebugMode
-- DebuggerAttached (relyes on delve tag)
-- InTracing / InTestingT
-- InTesting / InTestingT
-- InDevelopingTime
-- InVscodeTerminal
-- InK8s
-- InIstio
-- InDocker / InDockerEnvSimple
+- is.InDebugging / InDebugMode
+- is.DebuggerAttached (relyes on delve tag)
+- is.InTracing / InTestingT
+- is.InTesting / InTestingT
+- is.InDevelopingTime
+- is.InVscodeTerminal
+- is.InK8s
+- is.InIstio
+- is.InDocker / InDockerEnvSimple
 - Build
-  - K8sBuild
-  - IstioBuild
-  - DockerBuild
-  - VerboseBuild
-  - DebugBuild
+  - is.K8sBuild
+  - is.IstioBuild
+  - is.DockerBuild
+  - is.VerboseBuild
+  - is.DebugBuild
+  - buildtags.IsBuildTagExists
 
 - States / Env
   - VerboseModeEnabled
@@ -89,23 +93,32 @@ The partials:
   - GetTraceLevel / SetTraceMode / SetTraceLevel
 
 - Terminal / Tty
-  - IsTty(w)
-  - IsColoredTty(w)
-  - IsTtyEscaped(s)
+  - is.Terminal(file)
+  - is.TerminalFd(fd)
+  - is.Tty(wr)
+  - is.ColoredTty(wr)
+  - is.AnsiEscaped(s) (~~IsTtyEscaped(s)~~)
   - StripEscapes(s)
   - ReadPassword
   - GetTtySize
+  - is.GetTtySizeByName(filename) (cols,rows,err)
+  - is.GetTtySizeByFile(file) (cols,rows,err)
+  - is.GetTtySizeByFd(fd) (cols,rows,err)
+  - StartupByDoubleClick() bool
 
 - [Special] Terminal / Color
   - escaping tools: GetCPT()/GetCPTC()/GetCPTNC()
   - Highlight, Dimf, Text, Dim, ToDim, ToHighlight, ToColor, ...
 
 - Basics
-  - Peripheral, Closable, Closer
-  - RegisterClosable
-  - RegisterClosers
-  - RegisterCloseFns
+  - closers 
+    - Peripheral, Closable, Closer
+    - RegisterClosable
+    - RegisterClosers
+    - RegisterCloseFns
   - `is.Signals().Catcher()`
+  - is.FileExists(filepath)
+  - is.ToBool, StringToBool
 
 ### Build Tags
 
