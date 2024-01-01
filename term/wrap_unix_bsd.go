@@ -4,6 +4,8 @@ package term
 
 import (
 	"fmt"
+	"log/slog"
+	"os"
 	"syscall"
 	"unsafe"
 )
@@ -11,12 +13,21 @@ import (
 // GetTtySize returns the window size in columns and rows in the active console window.
 // The return value of this function is in the order of cols, rows.
 func GetTtySize() (cols, rows int) {
-	var err error
-	cols, rows, err = getFdSize(syscall.Stdin)
+	cols, rows, _ = getTtySize("")
+	return
+}
+
+func getTtySize(device string) (cols, rows int, err error) {
+	cols, rows, err = getFdSize(uintptr(syscall.Stdin))
 	if err != nil {
 		slog.Error("[GetTtySize] cannot get terminal size", "err", err)
 	}
 	return
+}
+
+func getDeviceSize(outf *os.File) (cols, rows int, err error) {
+	out := outf.Fd()
+	return getFdSize(out)
 }
 
 func getFdSize(fd uintptr) (cols, rows int, err error) {

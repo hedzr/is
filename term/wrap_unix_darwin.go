@@ -70,14 +70,11 @@ func getTtySize(device string) (cols, rows int, err error) {
 	return getDeviceSize(outf)
 }
 
-func GetTtySizeByName(fn string) (cols, rows int, err error)     { return getTtySize(fn) }
-func GetTtySizeByFile(outf *os.File) (cols, rows int, err error) { return getDeviceSize(outf) }
 func getDeviceSize(outf *os.File) (cols, rows int, err error) {
 	out := outf.Fd()
 	return getFdSize(out)
 }
 
-func GetTtySizeByFd(fd uintptr) (cols, rows int, err error) { return GetFdSize(fd) }
 func getFdSize(fd uintptr) (cols, rows int, err error) {
 	var sz struct {
 		rows, cols, xPixels, yPixels uint16

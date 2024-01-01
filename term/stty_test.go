@@ -1,13 +1,11 @@
 package term
 
 import (
-	"fmt"
 	"os"
 	"runtime"
 	"testing"
 
 	"golang.org/x/crypto/ssh/terminal"
-	"golang.org/x/sys/unix"
 	"golang.org/x/term"
 )
 
@@ -31,15 +29,6 @@ func TestIsTerminal(t *testing.T) {
 	// window size
 	winSize(t, "os.Stdout", os.Stdout)
 	run4dev(t, "/dev/tty", winSize)
-
-	// _, err := unix.IoctlGetWinsize(int(os.Stdout.Fd()), unix.TIOCGWINSZ)
-	// _, err := unix.IoctlGetWinsize(int(os.Stdout.Fd()), ioctlReadTermios)
-	_, err := unix.IoctlGetTermios(int(os.Stdout.Fd()), unix.TIOCGETA)
-	if err != nil {
-		fmt.Println("Hello World")
-	} else {
-		fmt.Println("\033[1;34mHello World!\033[0m")
-	}
 
 	cols, rows, err := getDeviceSize(os.Stdout)
 	t.Logf("getDeviceSize: %v, %v, %v", cols, rows, err)
