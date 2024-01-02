@@ -9,6 +9,19 @@ import (
 
 type closerS struct{}
 
+// Closers returns the container includes all registered closable objects.
+//
+// The simplest ways is using package level Close function:
+//
+//	func main() {
+//	    defer is.Closers().Close()
+//
+//	    // others statements ...
+//
+//	    is.Closers().RegisterCloseFns(func(){ sth.Close() })
+//
+//	    // more statements...
+//	}
 func Closers() closerS { return closerS{} }
 
 // RegisterPeripheral adds a peripheral into our global closers set.
@@ -31,7 +44,7 @@ func (s closerS) RegisterClosers(cc ...basics.Closer) { basics.RegisterClosers(c
 // You must make a call to Close before your app shutting down. For example:
 //
 //	func main() {
-//	    defer closers.Close()
+//	    defer is.Closers().Close()
 //	    // ...
 //	}
 func (s closerS) Close() {
@@ -60,7 +73,8 @@ type signalS struct{}
 //
 //	  "github.com/hedzr/env"
 //	  "github.com/hedzr/go-socketlib/net"
-//	  logz "github.com/hedzr/logg/slog"
+//
+//	  logz "logslog"
 //	)
 //
 //	func main() {

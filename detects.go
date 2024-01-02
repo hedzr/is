@@ -189,34 +189,34 @@ func DebugBuild() bool   { return isdelve.Enabled }           // is debug build?
 func VerboseBuild() bool { return buildtags.VerboseEnabled }  // is verbose build? need build tag 'verbose' present
 
 func VerboseModeEnabled() bool { return Env().IsVerboseMode() }  // is verbose build, or is CLI Verbose mode enabled (by `--verbose`)?
-func GetVerboseLevel() int     { return Env().CountOfVerbose() } //
-func SetVerboseMode(b bool)    { Env().SetVerboseMode(b) }       //
-func SetVerboseLevel(hits int) { Env().SetVerboseCount(hits) }   //
+func GetVerboseLevel() int     { return Env().CountOfVerbose() } // returns verbose state level
+func SetVerboseMode(b bool)    { Env().SetVerboseMode(b) }       // sets verbose state
+func SetVerboseLevel(hits int) { Env().SetVerboseCount(hits) }   // sets verbose level
 
 func QuietModeEnabled() bool { return Env().IsQuietMode() }  // is quiet build, or is CLI Quiet mode enabled (by `--verbose`)?
-func GetQuietLevel() int     { return Env().CountOfQuiet() } //
-func SetQuietMode(b bool)    { Env().SetQuietMode(b) }       //
-func SetQuietLevel(hits int) { Env().SetQuietCount(hits) }   //
+func GetQuietLevel() int     { return Env().CountOfQuiet() } // returns quiet state level
+func SetQuietMode(b bool)    { Env().SetQuietMode(b) }       // sets quiet state
+func SetQuietLevel(hits int) { Env().SetQuietCount(hits) }   // sets quiet level
 
 func NoColorMode() bool        { return Env().IsNoColorMode() }  // plain mode (non-colorful mode)
-func GetNoColorLevel() int     { return Env().CountOfNoColor() } //
-func SetNoColorMode(b bool)    { Env().SetNoColorMode(b) }       //
-func SetNoColorLevel(hits int) { Env().SetNoColorCount(hits) }   //
+func GetNoColorLevel() int     { return Env().CountOfNoColor() } // returns no-color state level
+func SetNoColorMode(b bool)    { Env().SetNoColorMode(b) }       // sets no-color state
+func SetNoColorLevel(hits int) { Env().SetNoColorCount(hits) }   // setd no-color level
 
 func DebugMode() bool        { return Env().GetDebugMode() }  // is debug build, or is CLI debug mode enabled (by `--debug`)?
 func GetDebugLevel() int     { return Env().GetDebugLevel() } // for debug build, return the debug level integer, 0-9
-func SetDebugMode(b bool)    { Env().SetDebugMode(b) }        //
-func SetDebugLevel(hits int) { Env().SetDebugLevel(hits) }    //
+func SetDebugMode(b bool)    { Env().SetDebugMode(b) }        // sets debug state
+func SetDebugLevel(hits int) { Env().SetDebugLevel(hits) }    // sets debug level
 
 func Tracing() bool          { return trace.IsEnabled() }     // is tracing-flag true in trace package
 func TraceMode() bool        { return Env().GetTraceMode() }  // is CLI trace mode enabled (by `--trace`)? or is tracing-flag true in trace package
 func GetTraceLevel() int     { return Env().GetTraceLevel() } // return the trace level integer, 0-9
-func SetTraceMode(b bool)    { Env().SetTraceMode(b) }        //
-func SetTraceLevel(hits int) { Env().SetTraceLevel(hits) }    //
+func SetTraceMode(b bool)    { Env().SetTraceMode(b) }        // sets trace state
+func SetTraceLevel(hits int) { Env().SetTraceLevel(hits) }    // sets trace level
 
 // States or Env returns a minimal environment settings for a typical CLI app.
 //
-// See also states.CmdrMinimal.
+// See also [states.CmdrMinimal].
 func States() states.CmdrMinimal           { return states.Env() }
 func Env() states.CmdrMinimal              { return states.Env() }       // States or Env returns a minimal environment settings for a typical CLI app.
 func UpdateEnvWith(env states.CmdrMinimal) { states.UpdateEnvWith(env) } // If u will, use ur own env

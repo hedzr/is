@@ -11,12 +11,15 @@ type (
 		Close()
 	}
 
+	// Closable clears the hot data of an object before
+	// shutting down app.
 	Closable interface {
 		// Close provides a closer to cleanup the peripheral gracefully
 		Close()
 	}
 
-	Closer interface { // = io.Closer
+	// Closer is synonym about io.Closer
+	Closer interface {
 		Close() error // = io.Closer
 	}
 
