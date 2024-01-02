@@ -13,7 +13,6 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/term"
 
-	"github.com/hedzr/env/assert/diffmatchpatch"
 	"github.com/hedzr/is/stringtool"
 )
 
@@ -228,16 +227,17 @@ func assertEqualSkip(t testing.TB, skip int, expect, actual interface{}, message
 		if len(messages) > 0 {
 			fmt.Println(messages...)
 		}
-		fmt.Printf("%s:%d expecting %v (%v), but got %v (%v). DIFF is: %v\n",
+		fmt.Printf("%s:%d expecting %v (%v), but got %v (%v).\n",
 			path.Base(file), line,
 			expect, reflect.TypeOf(expect),
 			actual, reflect.TypeOf(actual),
-			diffmatchpatch.DiffValues(expect, actual))
+			// diffmatchpatch.DiffValues(expect, actual),
+		)
 		t.FailNow()
 	}
 }
 
-func isEqual(val1, val2 interface{}) bool {
+func isEqual(val1, val2 any) bool {
 	v1 := reflect.ValueOf(val1)
 	v2 := reflect.ValueOf(val2)
 
@@ -284,7 +284,7 @@ func isEqualArray(v1, v2 reflect.Value) bool {
 }
 
 // isEqualConcretely returns whether val1 is equal to val2 taking into account Pointers, Interfaces and their underlying types
-func isEqualConcretely(val1, val2 interface{}) bool {
+func isEqualConcretely(val1, val2 any) bool {
 	v1 := reflect.ValueOf(val1)
 	v2 := reflect.ValueOf(val2)
 
