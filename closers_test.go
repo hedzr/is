@@ -51,8 +51,7 @@ func TestSignalStruct_Raise(t *testing.T) {
 		basics.VerboseFn("go routine 1 stopped.")
 	}()
 
-	Signals().
-		Catch().
+	Signals().Catch().
 		WithPrompt().
 		Wait(func(stopChan chan<- os.Signal, wgShutdown *sync.WaitGroup) {
 			basics.VerboseFn("[cb] raising interrupt after a second...")
