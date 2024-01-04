@@ -4,9 +4,9 @@
 [![Go](https://github.com/hedzr/is/actions/workflows/go.yml/badge.svg)](https://github.com/hedzr/is/actions/workflows/go.yml)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/hedzr/is.svg?label=release)](https://github.com/hedzr/is/releases)
 [![go.dev](https://img.shields.io/badge/go-dev-green)](https://pkg.go.dev/github.com/hedzr/is)
+[![deps.dev](https://img.shields.io/badge/deps-dev-green)](https://deps.dev/go/github.com%2Fhedzr%2Fis)
 
-
-`is` provides a set of detectors for the environment checking.
+`is` provides numerous detectors for checking the states of environment (build, executive, ...).
 
 ## Features
 
@@ -73,7 +73,7 @@ func main() {
 }
 ```
 
-Result got:
+Result is similar with (no updated yet):
 
 ![image-20231107101843524](https://cdn.jsdelivr.net/gh/hzimg/blog-pics@master/uPic/image-20231107101843524.png)
 
