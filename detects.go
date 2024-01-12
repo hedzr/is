@@ -3,6 +3,7 @@ package is
 import (
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/hedzr/is/states"
 	"github.com/hedzr/is/states/buildtags"
@@ -220,3 +221,65 @@ func SetTraceLevel(hits int) { Env().SetTraceLevel(hits) }    // sets trace leve
 func States() states.CmdrMinimal           { return states.Env() }
 func Env() states.CmdrMinimal              { return states.Env() }       // States or Env returns a minimal environment settings for a typical CLI app.
 func UpdateEnvWith(env states.CmdrMinimal) { states.UpdateEnvWith(env) } // If u will, use ur own env
+
+// Detected returns the detected state associated with the given state name.
+//
+// = State, see also it.
+func Detected(stateName string) (state bool) { return State(stateName) }
+
+// State returns a state with the given state name.
+func State(stateName string) (state bool) {
+	initmstates()
+	if fn, ok := mstates[stateName]; ok {
+		return fn()
+	}
+	return
+}
+
+// RegisterStateGetter allows integrating your own detector into State(name) bool.
+//
+// For example:
+//
+//	func customState() bool { reutrn ... }
+//	is.RegisterStateGetter("custom", customState)
+//	println(is.State("custom"))
+func RegisterStateGetter(state string, getter func() bool) {
+	initmstates()
+	mstates[state] = getter
+}
+
+func initmstates() {
+	oncemstates.Do(func() {
+		mstates = make(map[string]func() bool)
+
+		mstates["debug"] = states.Env().GetDebugMode
+		mstates["trace"] = states.Env().GetTraceMode
+		mstates["verbose"] = states.Env().IsVerboseMode
+		mstates["quiet"] = states.Env().IsQuietMode
+		mstates["no-color"] = states.Env().IsNoColorMode
+
+		mstates["docker-build"] = DockerBuild
+		mstates["k8s-build"] = K8sBuild
+		mstates["istio-build"] = IstioBuild
+		mstates["debug-build"] = DebugBuild
+		mstates["verbose-build"] = VerboseBuild
+
+		mstates["in-docker"] = InDocker
+		mstates["in-k8s"] = InK8s
+		mstates["in-istio"] = InIstio
+
+		mstates["in-vscode-terminal"] = InVscodeTerminal
+
+		mstates["in-testing"] = InTesting
+		mstates["in-developing-time"] = InDevelopingTime
+
+		mstates["in-tracing"] = InTracing
+		mstates["has-debugger"] = InDebugMode
+		mstates["in-debugging"] = InDebugMode // note that we cannot detect if a debugger attached really
+	})
+}
+
+var (
+	mstates     map[string]func() bool
+	oncemstates sync.Once
+)
