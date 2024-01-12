@@ -27,7 +27,7 @@ import (
 //
 // To check wildly like cli app debug mode (via --debug), call InDebugMode.
 //
-// To find parent process is dlv (that is, detecting a real debugger present), another library needed.
+// To find the parent process is dlv (that is, detecting a real debugger present), another library needed.
 func InDebugging() bool {
 	return states.Env().InDebugging() // isdelve.Enabled
 }
@@ -38,7 +38,7 @@ func InDebugging() bool {
 //
 // # To check wildly like cli app debug mode (via --debug), call InDebugMode
 //
-// To find parent process is dlv (that is, detecting a real debugger present), another library needed.
+// To find the parent process is dlv (that is, detecting a real debugger present), another library needed.
 func DebuggerAttached() bool {
 	return states.Env().InDebugging() // isdelve.Enabled
 }
@@ -49,7 +49,7 @@ func DebuggerAttached() bool {
 //   - a debug build
 //   - SetDebugMode(true) called.
 //
-// To find parent process is dlv (that is, detecting a real debugger present), another library needed.
+// To find the parent process is dlv (that is, detecting a real debugger present), another library needed.
 func InDebugMode() bool {
 	return states.Env().GetDebugMode() // isdelve.Enabled
 }
