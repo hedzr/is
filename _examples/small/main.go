@@ -15,7 +15,11 @@ import (
 func main() {
 	defer basics.Close()
 
+	is.RegisterStateGetter("custom", func() bool { return is.InVscodeTerminal() })
+
 	println(is.InTesting())
+	println(is.State("in-testing"))
+	println(is.State("custom")) // detects a state with custom detector
 	println(is.Env().GetDebugLevel())
 	if is.InDebugMode() {
 		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{AddSource: true, Level: slog.LevelDebug})))
