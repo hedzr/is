@@ -1,0 +1,43 @@
+# CHANGELOG & HISTORY
+
+- v0.5.13
+  - fixed wait-group count in catcher.Wait()
+  - review the implements of Catcher
+  - improved shadowed 'c' to 'cc'
+  - updated example app, and README.md
+
+- v0.5.11
+  - added `Detected(stateName) bool` and State(stateName) bool`
+
+- v0.5.10
+  - improved tests, fixed missing package
+  - improved go docs
+  - updated example app, and README.md
+
+- v0.5.7
+  - fixed tool.go and tests
+
+- v0.5.9
+  - added `buildtags.IsBuildTagExists(tag) bool`
+  - updated term package
+  - added ToBool, StringToBool
+  - fixed test cases
+
+- v0.5.7
+  - fixed tool.go and tests
+  - fixed missing ctx
+  - added basics package
+
+- v0.5.5
+  - fix code indents in readme
+  - security updates
+  - add '<dim>dim text</dim>'
+  - update color.Translator interface
+  - fix GetTtySize for darwin
+
+- v0.5.1
+  - fix tty function signatures 
+  - fix git action script
+
+- v0.5.0
+  - initial release
