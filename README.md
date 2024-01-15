@@ -32,6 +32,7 @@ import (
     "log/slog"
     "os"
     "sync"
+    "time"
 
     "github.com/hedzr/is"
     "github.com/hedzr/is/basics"
@@ -72,6 +73,11 @@ func main() {
         }).
         Wait(func(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
             slog.Debug("entering looper's loop...")
+            go func() {
+                // to terminate this app after a while automatically:
+                time.Sleep(10 * time.Second)
+                stopChan <- os.Interrupt
+            }()
             <-ctx.Done()  // waiting until any os signal caught
             wgDone.Done() // and complete myself
         })
