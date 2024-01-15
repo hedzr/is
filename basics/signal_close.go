@@ -248,8 +248,7 @@ func (s *catsig) Wait(looperHandler OnLooper) {
 	}
 	signal.Notify(cc, signals...) //nolint:govet //whyNoLint for why
 
-	var wgForShutdown sync.WaitGroup
-	wgForShutdown.Add(len(s.onCaught))
+	wgForShutdown.Add(len(s.looperHandlers))
 
 	for _, f := range s.looperHandlers {
 		go func(cc chan os.Signal, wgInitialized, wgForShutdown *sync.WaitGroup, f OnLooper) {
