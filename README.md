@@ -32,7 +32,7 @@ import (
     "log/slog"
     "os"
     "sync"
-    
+
     "github.com/hedzr/is"
     "github.com/hedzr/is/basics"
     "github.com/hedzr/is/term/color"
@@ -45,7 +45,7 @@ func main() {
 
     println(is.InTesting())
     println(is.State("in-testing"))
-    println(is.State("custom"))        // detects a state with custom detector 
+    println(is.State("custom")) // detects a state with custom detector
     println(is.Env().GetDebugLevel())
     if is.InDebugMode() {
         slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{AddSource: true, Level: slog.LevelDebug})))
@@ -64,16 +64,35 @@ func main() {
     catcher := is.Signals().Catch()
     catcher.
         WithPrompt("Press CTRL-C to quit...").
+        WithOnLoop(dbStarter, cacheStarter, mqStarter).
         WithOnSignalCaught(func(sig os.Signal, wg *sync.WaitGroup) {
             println()
             slog.Info("signal caught", "sig", sig)
-            cancel()  // cancel user's loop, see Wait(...)
-            wg.Done() // cancel catcher itself
+            cancel() // cancel user's loop, see Wait(...)
         }).
-        Wait(func(stopChan chan<- os.Signal, wgShutdown *sync.WaitGroup) {
+        Wait(func(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
             slog.Debug("entering looper's loop...")
-            <-ctx.Done()
+            <-ctx.Done()  // waiting until any os signal caught
+            wgDone.Done() // and complete myself
         })
+}
+
+func dbStarter(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
+    // initializing database connections...
+    // ...
+    wgDone.Done()
+}
+
+func cacheStarter(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
+    // initializing redis cache connections...
+    // ...
+    wgDone.Done()
+}
+
+func mqStarter(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
+    // initializing message queue connections...
+    // ...
+    wgDone.Done()
 }
 ```
 

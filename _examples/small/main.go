@@ -38,14 +38,33 @@ func main() {
 	catcher := is.Signals().Catch()
 	catcher.
 		WithPrompt("Press CTRL-C to quit...").
+		WithOnLoop(dbStarter, cacheStarter, mqStarter).
 		WithOnSignalCaught(func(sig os.Signal, wg *sync.WaitGroup) {
 			println()
 			slog.Info("signal caught", "sig", sig)
-			cancel()  // cancel user's loop, see Wait(...)
-			wg.Done() // cancel catcher itself
+			cancel() // cancel user's loop, see Wait(...)
 		}).
-		Wait(func(stopChan chan<- os.Signal, wgShutdown *sync.WaitGroup) {
+		Wait(func(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
 			slog.Debug("entering looper's loop...")
-			<-ctx.Done()
+			<-ctx.Done()  // waiting until any os signal caught
+			wgDone.Done() // and complete myself
 		})
+}
+
+func dbStarter(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
+	// initializing database connections...
+	// ...
+	wgDone.Done()
+}
+
+func cacheStarter(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
+	// initializing redis cache connections...
+	// ...
+	wgDone.Done()
+}
+
+func mqStarter(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
+	// initializing message queue connections...
+	// ...
+	wgDone.Done()
 }
