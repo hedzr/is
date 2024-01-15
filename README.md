@@ -19,7 +19,7 @@
 - stringtool: `RandomStringPure`, ...
 - basics: closable, closer, signals.
 
-To using environ detecting utilities better and smoother, some terminal (and stringtool, basics) tools are bundled together.
+To using environment detecting utilities better and smoother, some terminal (and stringtool, basics) tools are bundled together.
 
 ## Usages
 
@@ -345,4 +345,4 @@ Kindly welcome, please issue me first for keeping this repo smaller.
 
 ## License
 
-Apache 2.0
+under Apache 2.0
