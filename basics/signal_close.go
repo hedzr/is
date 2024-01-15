@@ -202,6 +202,7 @@ func (s *catsig) Wait(looperHandlerS ...OnLooper) {
 	wgInitialized.Add(len(s.looperHandlers))
 
 	var closed int32
+
 	done := make(chan struct{})
 	shutDone := func() {
 		if atomic.CompareAndSwapInt32(&closed, 0, 1) {
@@ -216,23 +217,23 @@ func (s *catsig) Wait(looperHandlerS ...OnLooper) {
 	if len(signals) == 0 {
 		signals = []os.Signal{os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGINT}
 	}
-	signal.Notify(c, signals...) //nolint:govet //whyNoLint for why
+	signal.Notify(cc, signals...) //nolint:govet //whyNoLint for why
 
 	var wgForShutdown sync.WaitGroup
 	wgForShutdown.Add(len(s.onCaught))
 
 	for _, f := range s.looperHandlers {
-		go func(c chan os.Signal, wgInitialized, wgForShutdown *sync.WaitGroup, f OnLooper) {
+		go func(cc chan os.Signal, wgInitialized, wgForShutdown *sync.WaitGroup, f OnLooper) {
 			wgInitialized.Done()
-			f(c, wgForShutdown)
-		}(c, &wgInitialized, &wgForShutdown, f)
+			f(cc, wgForShutdown)
+		}(cc, &wgInitialized, &wgForShutdown, f)
 	}
 	wgInitialized.Wait()
 
 	verbose("all looper(s) ran")
 
 	go func(wg *sync.WaitGroup) {
-		sig := <-c
+		sig := <-cc
 		for _, cb := range s.onCaught {
 			if cb != nil {
 				cb(sig, wg)
@@ -246,8 +247,8 @@ func (s *catsig) Wait(looperHandlerS ...OnLooper) {
 		done <- struct{}{}
 	}(&wgForShutdown)
 
-	// enter main loop here till someone raise a signal from looperHandlers
-	// by triggering such as  `stopChan <- os.Interrupt`, or a user press
+	// enter the main loop here till someone raises a signal from looperHandlers
+	// by triggering such as `stopChan <- os.Interrupt`, or a user press
 	// CTRL-C in terminal, or others unexpected cases (such as panics).
 	verbose("waiting at <-done.")
 	if s.msg != "" {
