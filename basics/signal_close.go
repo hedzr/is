@@ -61,11 +61,10 @@ import (
 // At the ending of program, all closers (see Peripheral and Close) will be
 // closed safely, except panic in their Close codes.
 //
-// For example:
+// For example,
 //
 //	basics.VerboseFn = t.Logf
-//	env.Signals().
-//		Catch().
+//	env.Signals().Catch().
 //		WithPrompt().
 //		Wait(func(stopChan chan<- os.Signal) {
 //			basics.VerboseFn("[cb] raising interrupt after a second...")
@@ -78,17 +77,18 @@ import (
 //
 //	https://www.developer.com/languages/os-signals-go/
 //
-// Your logic to shutdown the main loop gracefully could be:
+// Your logic that shutdown the main loop gracefully could be:
 //
 //	type appS struct{}
-//	func (s *appS) DoClose(stopChan chan<- os.Signal) {
+//	func (s *appS) MainRunner(stopChan chan<- os.Signal, wgShutdown *sync.WaitGroup) {
+//	     wgShutdown.Done()
 //	     stopChan <- os.Interrupt
 //	}
+//
 //	var app appS
 //
-//	env.Signals().
-//	    Catch().
-//	    Wait(app.DoClose)
+//	env.Signals().Catch().
+//	    Wait(app.MainRunner)
 func Catch(signals ...os.Signal) Catcher {
 	return &catsig{signals: signals}
 }
@@ -103,14 +103,17 @@ type Catcher interface {
 	// WithSignals declares a set of signals which can be caught with
 	// application processing logics.
 	//
-	// An empty call means the default set are applying:
-	//    signals = []os.Signal{os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGHUP}
+	// An empty call means the default set will be applying:
+	//
+	//	signals = []os.Signal{os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGHUP}
+	//
 	// These signals are hard-coded.
 	WithSignals(signals ...os.Signal) Catcher
-	// WithCloseHandlers gives the extra Peripheral 's a chance with safely shutting down.
+	// WithCloseHandlers gives the extra Peripheral's a chance
+	// with safely shutting down.
 	//
-	// The better way is registering them with env.Closers().RegisterPeripheral(p). All
-	// registered peripherals will be released/closed in the ending of Wait.
+	// The better way is registering them with env.Closers().RegisterPeripheral(p).
+	// All registered peripherals will be released/closed in the ending of Wait.
 	WithCloseHandlers(onFinish ...Peripheral) Catcher
 	// WithPrompt show a message before entering main loop.
 	//
@@ -121,19 +124,45 @@ type Catcher interface {
 	// If you dislike printing anything, do Wait() directly
 	// without WithPrompt call.
 	WithPrompt(msg ...string) Catcher
+	// WithOnSignalCaught setups handlers while any os signals caught by app.
 	WithOnSignalCaught(cb ...OnSignalCaught) Catcher
-	WithOnLoop(cb ...OnLooper) Catcher
-	WithVerboseFn(cb func(msg string, args ...any)) Catcher
-	// Wait get the current thread blocked on reading done channel till a os
-	// signal break it.
+	// WithOnLoop setups OnLooper handlers.
 	//
-	// You may send a signal (commonly like os.Interrupt) to stopChan to stop
-	// the blocked state programmatically.
-	Wait(stopperHandlers ...OnLooper)
+	// Generally, the OnLooper handlers can be sent to Wait(...) while invoked.
+	// But you can always register some looper(s) before Wait(a-main-looper).
+	// For example:
+	//
+	//	is.Signals().Catch().
+	//	    WithOnLoop(redisStarter, etcdStarter, mongoStarter, dbStarter).
+	//	    Wait(func(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
+	//	        // pop3server.Debug("entering looper's loop...")
+	//
+	//	        // setup handler: close catcher's waiting looper while 'pop3server' shut down
+	//	        pop3server.WithOnShutdown(func(err error, ss net.Server) { wgShutdown.Done() })
+	//
+	//	        go func() {
+	//	            err := pop3server.ListenAndServe(ctx, nil)
+	//	            if err != nil {
+	//	                pop3server.Error("server serve failed", "err", err)
+	//	                panic(err)
+	//	            }
+	//	        }()
+	//	    })
+	WithOnLoop(cb ...OnLooper) Catcher
+	// WithVerboseFn gives a change to log he catcher's internal state.
+	WithVerboseFn(cb func(msg string, args ...any)) Catcher
+	// Wait get the current thread blocked on reading 'done' channel
+	// till an os signal break it.
+	//
+	// Each OnLooper must call wgDone.Done() to notify the looper was done.
+	//
+	// An optional way by sending os.Interrupt to stopChan could stop
+	// catcher Wait loop programmatically, if necessary.
+	Wait(stopperHandler OnLooper)
 }
 
-type OnSignalCaught func(sig os.Signal, wgShutdown *sync.WaitGroup)
-type OnLooper func(stopChan chan<- os.Signal, wgShutdown *sync.WaitGroup)
+type OnSignalCaught func(sig os.Signal, wgShutdown *sync.WaitGroup)   // callback while an os signal caught
+type OnLooper func(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) // callback while get into waiting loop
 
 type catsig struct {
 	signals        []os.Signal
@@ -192,15 +221,12 @@ func (s *catsig) WithVerboseFn(cb func(msg string, args ...any)) Catcher {
 	return s
 }
 
-func (s *catsig) Wait(looperHandlerS ...OnLooper) {
+func (s *catsig) Wait(looperHandler OnLooper) {
 	defer Close()
 	defer s.Close()
 
-	s.looperHandlers = append(s.looperHandlers, looperHandlerS...)
-
 	var wgInitialized sync.WaitGroup
-	wgInitialized.Add(len(s.looperHandlers))
-
+	var wgForShutdown sync.WaitGroup
 	var closed int32
 
 	done := make(chan struct{})
@@ -212,7 +238,10 @@ func (s *catsig) Wait(looperHandlerS ...OnLooper) {
 	}
 	defer shutDone()
 
-	c := make(chan os.Signal, 8) // allow buffering some signals
+	s.looperHandlers = append(s.looperHandlers, looperHandler)
+	wgInitialized.Add(len(s.looperHandlers))
+
+	cc := make(chan os.Signal, 8) // allow buffering some signals
 	signals := s.signals
 	if len(signals) == 0 {
 		signals = []os.Signal{os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGINT}
