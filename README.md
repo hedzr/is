@@ -18,6 +18,7 @@
 - Terminal Colorizer, Detector, unescape tool.
 - stringtool: `RandomStringPure`, ...
 - basics: closable, closer, signals.
+- go 1.21+ required
 
 To using environment detecting utilities better and smoother, some terminal (and stringtool, basics) tools are bundled together.
 
