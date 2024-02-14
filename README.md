@@ -15,9 +15,10 @@
 - `is.DebugBuild() bool`.
 - `is.K8sBuild() bool`, `is.DockerBuild() bool`, ....
 - `is.ColoredTty() bool`, ....
-- Terminal Colorizer, Detector, unescape tool.
+- Terminal Colorizer, Detector, unescape tools.
 - stringtool: `RandomStringPure`, ...
 - basics: closable, closer, signals.
+  - easier `Press any key to exit...` prompt: `is.Signals().Catch()`
 - go 1.21+ required
 
 To using environment detecting utilities better and smoother, some terminal (and stringtool, basics) tools are bundled together.

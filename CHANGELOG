@@ -1,5 +1,8 @@
 # CHANGELOG & HISTORY
 
+- v0.5.15
+  - security patch - upgrade google deps
+
 - v0.5.13
   - fixed wait-group count in catcher.Wait()
   - review the implements of Catcher
