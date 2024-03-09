@@ -1,5 +1,8 @@
 # CHANGELOG & HISTORY
 
+- v0.5.16
+  - security patch - upgrade google deps
+
 - v0.5.15
   - security patch - upgrade google deps
 
