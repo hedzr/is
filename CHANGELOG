@@ -1,5 +1,8 @@
 # CHANGELOG & HISTORY
 
+- v0.5.17
+  - fixed go.mod sync state
+
 - v0.5.16
   - security patch - upgrade google deps
 
