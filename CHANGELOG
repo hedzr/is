@@ -1,5 +1,8 @@
 # CHANGELOG & HISTORY
 
+- v0.5.18
+  - added cases converting tools: to snake-case, kebab-case, camel-case, and to golang exported name
+
 - v0.5.17
   - fixed go.mod sync state
 
