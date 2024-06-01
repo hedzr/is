@@ -1,5 +1,9 @@
 # CHANGELOG & HISTORY
 
+- v0.5.20
+  - security patch
+  - added an indexer to retrieve the functions in term/color subpackages
+
 - v0.5.19
   - security patch
 

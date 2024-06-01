@@ -16,6 +16,7 @@
 - `is.DebugBuild() bool`.
 - `is.K8sBuild() bool`, `is.DockerBuild() bool`, ....
 - `is.ColoredTty() bool`, ....
+- `is.Color()` to get an indexer for the functions in our term/color subpackage, ...
 - Terminal Colorizer, Detector, unescape tools.
 - stringtool: `RandomStringPure`, case-converters ...
 - basics: closable, closer, signals.
@@ -55,6 +56,8 @@ func main() {
         slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{AddSource: true, Level: slog.LevelDebug})))
     }
 
+    // or:
+    //    is.Color().GetColorTranslator().Translate("<b>bold</b>")
     fmt.Printf("%v", color.GetCPT().Translate(`<code>code</code> | <kbd>CTRL</kbd>
         <b>bold / strong / em</b>
         <i>italic / cite</i>
