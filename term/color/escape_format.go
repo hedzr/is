@@ -16,6 +16,19 @@ import (
 	"github.com/hedzr/is/term"
 )
 
+// Index is an indexer for retrieving the entries in this subpackage.
+type Index struct{}
+
+// GetColorTranslater returns a translator about ANSI Escaped Code.
+// It may or may not translating colored text depending
+// on cabin.GetNoColorMode.
+func (Index) GetColorTranslater() Translator       { return GetCPT() }
+func (Index) GetColorTranslaterAlways() Translator { return GetCPTC() }
+func (Index) GetColorTranslaterNever() Translator  { return GetCPTNC() }
+func (Index) GetDummyTranslater() Translator       { return GetDummyTranslator() }
+func (Index) ToColorString(clr Color) string       { return cpt.toColorString(clr) }
+func (Index) ToColorInt(s string) Color            { return cpt.ToColorInt(s) }
+
 // GetCPT returns a translator about ANSI Escaped Code.
 // It may or may not translating colored text depending
 // on cabin.GetNoColorMode.
@@ -59,13 +72,13 @@ var dummy dummyS
 
 type dummyS struct{}
 
-func (dummyS) Translate(s string, initialFg Color) string        { return s }
-func (dummyS) ColoredFast(out io.Writer, clr Color, text string) { _, _ = out.Write([]byte(text)) }
+func (dummyS) Translate(s string, initialFg Color) string        { return s }                       //nolint:revive
+func (dummyS) ColoredFast(out io.Writer, clr Color, text string) { _, _ = out.Write([]byte(text)) } //nolint:revive
 func (dummyS) DimFast(out io.Writer, text string)                { _, _ = out.Write([]byte(text)) }
 func (dummyS) HighlightFast(out io.Writer, text string)          { _, _ = out.Write([]byte(text)) }
-func (dummyS) WriteColor(out io.Writer, clr Color)               {}
-func (dummyS) WriteBgColor(out io.Writer, clr Color)             {}
-func (dummyS) Reset(out io.Writer)                               {}
+func (dummyS) WriteColor(out io.Writer, clr Color)               {} //nolint:revive
+func (dummyS) WriteBgColor(out io.Writer, clr Color)             {} //nolint:revive
+func (dummyS) Reset(out io.Writer)                               {} //nolint:revive
 
 type cpTranslator struct {
 	noColorMode bool // strip color code simply
@@ -75,30 +88,30 @@ func (c *cpTranslator) Translate(s string, initialFg Color) string {
 	return c.TranslateTo(s, initialFg)
 }
 
-func (c *cpTranslator) resetColors(sb *strings.Builder, states []Color) func() {
+func (c *cpTranslator) resetColors(sb *strings.Builder, states []Color) func() { //nolint:revive,gocritic
 	return func() {
 		var st string
 		st = "\x1b[0m"
-		(*sb).WriteString(st)
+		_, _ = (*sb).WriteString(st)
 		if len(states) > 0 {
 			st = fmt.Sprintf("\x1b[%dm", states[len(states)-1])
-			(*sb).WriteString(st)
+			_, _ = (*sb).WriteString(st)
 		}
 	}
 }
 
-func (c *cpTranslator) colorize(sb *strings.Builder, states []Color, walker *func(node *html.Node, level int)) func(node *html.Node, clr Color, representation string, level int) {
+func (c *cpTranslator) colorize(sb *strings.Builder, states []Color, walker *func(node *html.Node, level int)) func(node *html.Node, clr Color, representation string, level int) { //nolint:revive,gocritic,lll
 	return func(node *html.Node, clr Color, representation string, level int) {
 		if representation != "" {
-			(*sb).WriteString(fmt.Sprintf("\x1b[%sm", representation))
+			_, _ = (*sb).WriteString(fmt.Sprintf("\x1b[%sm", representation))
 		} else {
-			(*sb).WriteString(fmt.Sprintf("\x1b[%dm", clr))
+			_, _ = (*sb).WriteString(fmt.Sprintf("\x1b[%dm", clr))
 		}
-		states = append(states, clr)
+		states = append(states, clr) //nolint:revive
 		for child := node.FirstChild; child != nil; child = child.NextSibling {
 			(*walker)(child, level+1)
 		}
-		states = states[0 : len(states)-1]
+		states = states[0 : len(states)-1] //nolint:revive
 		c.resetColors(sb, states)()
 	}
 }
@@ -116,8 +129,8 @@ func (c *cpTranslator) TranslateTo(s string, initialState Color) string {
 	return c.translateTo(node, s, initialState)
 }
 
-func (c *cpTranslator) translateTo(root *html.Node, source string, initialState Color) string {
-	states := []Color{initialState}
+func (c *cpTranslator) translateTo(root *html.Node, source string, initialState Color) string { //nolint:revive,unparam
+	states := []Color{initialState} //nolint:revive,gocritic
 	var sb strings.Builder
 
 	var walker func(node *html.Node, level int)
@@ -169,7 +182,7 @@ func (c *cpTranslator) translateTo(root *html.Node, source string, initialState 
 			}
 		case html.TextNode:
 			// Logger.Debugf("%v, %v, lvl #%d\n", node.Type, node.Data, level)
-			sb.WriteString(node.Data)
+			_, _ = sb.WriteString(node.Data)
 			return
 		default:
 			// sb.WriteString(node.Data)
@@ -206,7 +219,7 @@ func (c *cpTranslator) stripLeftTabs(s string) string {
 	return c.Translate(r, 0)
 }
 
-func (c *cpTranslator) stripLeftTabsOnly(s string) string {
+func (c *cpTranslator) stripLeftTabsOnly(s string) string { //nolint:revive
 	var lines []string
 	tabs := 1000
 	var emptyLines []int
@@ -238,15 +251,15 @@ func (c *cpTranslator) stripLeftTabsOnly(s string) string {
 	for i, str := range lines {
 		switch {
 		case strings.HasPrefix(str, pad):
-			sb.WriteString(str[tabs:])
+			_, _ = sb.WriteString(str[tabs:])
 		case inIntSlice(i, emptyLines):
 		default:
-			sb.WriteString(str)
+			_, _ = sb.WriteString(str)
 		}
 		if noLastLF && i == len(lines)-1 {
 			break
 		}
-		sb.WriteRune('\n')
+		_, _ = sb.WriteRune('\n')
 	}
 
 	return sb.String()
@@ -279,7 +292,7 @@ func StripHTMLTags(s string) string { return cptNC.stripHTMLTags(s) }
 
 // Aggressively strips HTML tags from a string.
 // It will only keep anything between `>` and `<`.
-func (c *cpTranslator) stripHTMLTags(s string) string {
+func (c *cpTranslator) stripHTMLTags(s string) string { //nolint:revive
 	// Setup a string builder and allocate enough memory for the new string.
 	var builder strings.Builder
 	builder.Grow(len(s) + utf8.UTFMax)
@@ -290,8 +303,8 @@ func (c *cpTranslator) stripHTMLTags(s string) string {
 
 	for i, c := range s {
 		// If this is the last character and we are not in an HTML tag, save it.
-		if (i+1) == len(s) && end >= start {
-			builder.WriteString(s[end:])
+		if end >= start && (i+1) == len(s) {
+			_, _ = builder.WriteString(s[end:])
 		}
 
 		// Keep going if the character is not `<` or `>`
@@ -308,15 +321,15 @@ func (c *cpTranslator) stripHTMLTags(s string) string {
 			in = true
 
 			// Write the valid string between the close and start of the two tags.
-			builder.WriteString(s[end:start])
+			_, _ = builder.WriteString(s[end:start])
 			continue
 		}
 		// else c == htmlTagEnd
 		in = false
 		end = i + 1
 	}
-	s = builder.String()
-	return s
+	str := builder.String()
+	return str
 }
 
 func WrapColorTo(out io.Writer, clr Color, text string) {
@@ -398,8 +411,8 @@ func (c *cpTranslator) HighlightFast(out io.Writer, text string) {
 func (c *cpTranslator) WriteBgColor(out io.Writer, clr Color) { echoBg(out, clr) }
 func (c *cpTranslator) WriteColor(out io.Writer, clr Color)   { echoColor(out, clr) }
 func (c *cpTranslator) Reset(out io.Writer)                   { echoResetColor(out) }
-func (c *cpTranslator) color(out io.Writer, clr Color)        { echoColor(out, clr) }
-func (c *cpTranslator) resetColor(out io.Writer)              { echoResetColor(out) }
+func (c *cpTranslator) color(out io.Writer, clr Color)        { echoColor(out, clr) } //nolint:unused
+func (c *cpTranslator) resetColor(out io.Writer)              { echoResetColor(out) } //nolint:unused
 
 func echoColor(out io.Writer, clr Color) {
 	// _, _ = fmt.Fprintf(os.Stdout, "\x1b[%dm", c)
@@ -460,7 +473,7 @@ func (c *cpTranslator) onceInit() {
 
 func (c *cpTranslator) ToColorString(clr Color) string { return c.toColorString(clr) }
 
-func (c *cpTranslator) toColorString(clr Color) string {
+func (c *cpTranslator) toColorString(clr Color) string { //nolint:revive
 	c.onceInit()
 	if ss, ok := cptNM[clr]; ok {
 		return ss
@@ -470,7 +483,7 @@ func (c *cpTranslator) toColorString(clr Color) string {
 
 func (c *cpTranslator) ToColorInt(s string) Color { return c.toColorInt(s) }
 
-func (c *cpTranslator) toColorInt(s string) Color {
+func (c *cpTranslator) toColorInt(s string) Color { //nolint:revive
 	c.onceInit()
 	if i, ok := cptCM[strings.ToLower(s)]; ok {
 		return Color(i)
