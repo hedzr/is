@@ -22,12 +22,19 @@ type Index struct{}
 // GetColorTranslater returns a translator about ANSI Escaped Code.
 // It may or may not translating colored text depending
 // on cabin.GetNoColorMode.
-func (Index) GetColorTranslater() Translator       { return GetCPT() }
-func (Index) GetColorTranslaterAlways() Translator { return GetCPTC() }
-func (Index) GetColorTranslaterNever() Translator  { return GetCPTNC() }
-func (Index) GetDummyTranslater() Translator       { return GetDummyTranslator() }
-func (Index) ToColorString(clr Color) string       { return cpt.toColorString(clr) }
-func (Index) ToColorInt(s string) Color            { return cpt.ToColorInt(s) }
+func (Index) GetColorTranslater() Translator                    { return GetCPT() }
+func (Index) GetColorTranslaterAlways() Translator              { return GetCPTC() }
+func (Index) GetColorTranslaterNever() Translator               { return GetCPTNC() }
+func (Index) GetDummyTranslater() Translator                    { return GetDummyTranslator() }
+func (Index) ToColorString(clr Color) string                    { return cpt.toColorString(clr) }
+func (Index) ToColorInt(s string) Color                         { return cpt.ToColorInt(s) }
+func (Index) ColoredFast(out io.Writer, clr Color, text string) { WrapColorTo(out, clr, text) }
+func (Index) DimFast(out io.Writer, text string)                { WrapDimTo(out, text) }
+func (Index) HighlightFast(out io.Writer, text string)          { WrapHighlightTo(out, text) }
+func (Index) WrapDimToLite(out io.Writer, text string)          { WrapDimToLite(out, text) }
+func (Index) WrapColorAndBgTo(out io.Writer, clr, bg Color, text string) {
+	WrapColorAndBgTo(out, clr, bg, text)
+}
 
 // GetCPT returns a translator about ANSI Escaped Code.
 // It may or may not translating colored text depending
@@ -35,18 +42,12 @@ func (Index) ToColorInt(s string) Color            { return cpt.ToColorInt(s) }
 func GetCPT() Translator {
 	if states.Env().IsNoColorMode() {
 		return &cptNC
-	} else {
-		return &cpt
 	}
-}
-
-func GetCPTC() Translator {
 	return &cpt
 }
 
-func GetCPTNC() Translator {
-	return &cptNC
-}
+func GetCPTC() Translator  { return &cpt }
+func GetCPTNC() Translator { return &cptNC }
 
 func ToColorString(clr Color) string { return cpt.toColorString(clr) }
 func ToColorInt(s string) Color      { return cpt.ToColorInt(s) }
@@ -61,9 +62,9 @@ type Translator interface {
 	DimFast(out io.Writer, text string)
 	HighlightFast(out io.Writer, text string)
 
-	WriteColor(out io.Writer, clr Color)
-	WriteBgColor(out io.Writer, clr Color)
-	Reset(out io.Writer)
+	WriteColor(out io.Writer, clr Color)   // echo ansi color bytes for foreground color
+	WriteBgColor(out io.Writer, clr Color) // echo ansi color bytes for background color
+	Reset(out io.Writer)                   // echo ansi color bytes for resetting color
 }
 
 func GetDummyTranslator() Translator { return dummy } // return Translator for displaying plain text without color
@@ -130,7 +131,7 @@ func (c *cpTranslator) TranslateTo(s string, initialState Color) string {
 }
 
 func (c *cpTranslator) translateTo(root *html.Node, source string, initialState Color) string { //nolint:revive,unparam
-	states := []Color{initialState} //nolint:revive,gocritic
+	states, _ := []Color{initialState}, source //nolint:revive,gocritic
 	var sb strings.Builder
 
 	var walker func(node *html.Node, level int)
@@ -393,17 +394,17 @@ func WrapHighlightTo(out io.Writer, text string) {
 	_, _ = out.Write([]byte("\x1b[0m"))
 }
 
-// ColoredFast outputs formatted message to stdout while logger level
-// less than slog.Warn.
-// For slog.SetLevel(slog.Error), the text will be discarded.
+// ColoredFast outputs formatted message to stdout with colored ansi codes.
 func (c *cpTranslator) ColoredFast(out io.Writer, clr Color, text string) {
 	WrapColorTo(out, clr, text)
 }
 
+// DimFast outputs formatted message to stdout with colored ansi codes.
 func (c *cpTranslator) DimFast(out io.Writer, text string) {
 	WrapDimTo(out, text)
 }
 
+// HighlightFast outputs formatted message to stdout with colored ansi codes.
 func (c *cpTranslator) HighlightFast(out io.Writer, text string) {
 	WrapHighlightTo(out, text)
 }
@@ -486,7 +487,7 @@ func (c *cpTranslator) ToColorInt(s string) Color { return c.toColorInt(s) }
 func (c *cpTranslator) toColorInt(s string) Color { //nolint:revive
 	c.onceInit()
 	if i, ok := cptCM[strings.ToLower(s)]; ok {
-		return Color(i)
+		return i
 	}
 	return Color(0)
 }
