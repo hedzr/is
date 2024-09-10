@@ -59,53 +59,68 @@ func (s closerS) ClosersClosers() []basics.Peripheral { return basics.ClosersClo
 
 type signalS struct{}
 
-// Signals return a signals helper so that you can catch them, raise them.
+// Signals returns a signals-helper so that you can catch them, and raise them later.
+//
+// Typically usage is `catcher := is.Signals().Catch(); ...`.
+//
+// By default, catcher will listen on standard signals set: os.Interrupt,
+// os.Kill, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGINT.
+//
+// But you can change them with:
+//
+//	is.Signals().Catch(os.Kill, os.Interrupt)
+//
+// or:
+//
+//	is.Signals().Catch().WithSignals(os.Interrupt, os.Kill)
 //
 // For example:
 //
-//	package main
+//		package main
 //
-//	import (
-//	  "context"
-//	  "fmt"
-//	  "os"
-//	  "sync"
+//		import (
+//		  "context"
+//		  "fmt"
+//		  "os"
+//		  "sync"
 //
-//	  "github.com/hedzr/env"
-//	  "github.com/hedzr/go-socketlib/net"
+//		  "github.com/hedzr/env"
+//		  "github.com/hedzr/go-socketlib/net"
 //
-//	  logz "logslog"
-//	)
+//		  logz "logslog"
+//		)
 //
-//	func main() {
-//	  logz.SetLevel(logz.DebugLevel)
+//		func main() {
+//		  logz.SetLevel(logz.DebugLevel)
 //
-//	  server := net.NewServer(":7099")
-//	  defer server.Close()
+//		  server := net.NewServer(":7099")
+//		  defer server.Close()
 //
-//	  ctx, cancel := context.WithCancel(context.Background())
-//	  defer cancel()
+//		  ctx, cancel := context.WithCancel(context.Background())
+//		  defer cancel()
 //
-//	  catcher := env.Signals().Catch()
-//	  catcher.WithVerboseFn(func(msg string, args ...any) {
-//	    logz.Debug(fmt.Sprintf("[verbose] %s", fmt.Sprintf(msg, args...)))
-//	  }).WithSignalCaught(func(sig os.Signal, wg *sync.WaitGroup) {
-//	    println()
-//	    logz.Debug("signal caught", "sig", sig)
-//	    if err := server.Shutdown(); err != nil {
-//	    	logz.Error("server shutdown error", "err", err)
-//	    }
-//	    cancel()
-//	  }).Wait(func(stopChan chan<- os.Signal, wgShutdown *sync.WaitGroup) {
-//	    logz.Debug("entering looper's loop...")
+//		  catcher := is.Signals().Catch()
+//		  catcher.WithVerboseFn(func(msg string, args ...any) {
+//		    logz.Debug(fmt.Sprintf("[verbose] %s", fmt.Sprintf(msg, args...)))
+//		  }).
+//	   WithSignalCaught(func(sig os.Signal, wg *sync.WaitGroup) {
+//		    println()
+//		    logz.Debug("signal caught", "sig", sig)
+//		    if err := server.Shutdown(); err != nil {
+//		    	logz.Error("server shutdown error", "err", err)
+//		    }
+//		    cancel()
+//		  }).
+//	   Wait(func(stopChan chan<- os.Signal, wgShutdown *sync.WaitGroup) {
+//		    logz.Debug("entering looper's loop...")
 //
-//	    server.WithOnShutdown(func(err error) { wgShutdown.Done() })
-//	    err := server.StartAndServe(ctx)
-//	    if err != nil {
-//	      logz.Fatal("server serve failed", "err", err)
-//	    }
-//	  })
-//	}
+//		    server.WithOnShutdown(func(err error) { wgShutdown.Done() })
+//		    err := server.StartAndServe(ctx)
+//		    if err != nil {
+//		      logz.Fatal("server serve failed", "err", err)
+//		    }
+//		  })
+//		}
 func Signals() signalS { return signalS{} }
 
 // func (s signalS) SetupCloseHandlerAndWait(wg *sync.WaitGroup, closers ...basics.Peripheral) {

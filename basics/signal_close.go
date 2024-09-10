@@ -64,7 +64,7 @@ import (
 // For example,
 //
 //	basics.VerboseFn = t.Logf
-//	env.Signals().Catch().
+//	is.Signals().Catch().
 //		WithPrompt().
 //		Wait(func(stopChan chan<- os.Signal) {
 //			basics.VerboseFn("[cb] raising interrupt after a second...")
@@ -130,6 +130,7 @@ type Catcher interface {
 	//
 	// Generally, the OnLooper handlers can be sent to Wait(...) while invoked.
 	// But you can always register some looper(s) before Wait(a-main-looper).
+	//
 	// For example:
 	//
 	//	is.Signals().Catch().
@@ -161,7 +162,7 @@ type Catcher interface {
 	Wait(stopperHandler OnLooper)
 }
 
-type OnSignalCaught func(sig os.Signal, wgShutdown *sync.WaitGroup)   // callback while an os signal caught
+type OnSignalCaught func(sig os.Signal, wgShutdown *sync.WaitGroup)   // callback while an OS signal caught
 type OnLooper func(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) // callback while get into waiting loop
 
 type catsig struct {

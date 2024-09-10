@@ -278,7 +278,7 @@ func main() {
 
 ### Basics (Signals)
 
-`Signals()` could catch os signals and entering a infinite loop.
+`Signals()` could catch OS signals and entering a infinite loop.
 
 For example, a tcp server could be:
 
@@ -308,6 +308,7 @@ func main() {
     )
     defer server.Close()
 
+    // make a catcher so that it can catch ths signals,
     catcher := is.Signals().Catch()
     catcher.
         // WithVerboseFn(func(msg string, args ...any) {
