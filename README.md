@@ -21,7 +21,7 @@
 - stringtool: `RandomStringPure`, case-converters ...
 - basics: closable, closer, signals.
   - easier `Press any key to exit...` prompt: `is.Signals().Catch()`
-- go 1.21+ required
+- go 1.22.7+ required
 
 To using environment detecting utilities better and smoother, some terminal (and stringtool, basics) tools are bundled together.
 
