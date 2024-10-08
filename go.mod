@@ -1,6 +1,6 @@
 module github.com/hedzr/is
 
-go 1.21
+go 1.22.7
 
 //replace github.com/hedzr/env => ../libs.env
 
