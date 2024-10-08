@@ -1,5 +1,8 @@
 # CHANGELOG & HIS
 
+- v0.5.26
+  - security patch
+
 - v0.5.25
   - security patch
   - change to go toolchain 1.22.7
