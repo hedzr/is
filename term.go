@@ -53,13 +53,13 @@ func StartupByDoubleClick() bool { return term.IsStartupByDoubleClick() }
 
 // Terminal detects if a file is a terminal device (tty)
 func Terminal(f *os.File) bool {
-	ret := term.IsTerminal(int(f.Fd()))
+	ret := term.IsTerminal(f.Fd())
 	return ret
 }
 
 // TerminalFd detects if a file-descriptor is a terminal device (tty)
 func TerminalFd(fd uintptr) bool {
-	ret := term.IsTerminal(int(fd))
+	ret := term.IsTerminal(fd)
 	return ret
 }
 
