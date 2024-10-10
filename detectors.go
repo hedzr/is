@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/hedzr/env/exec"
+	"os/exec"
 )
 
 // Root returns true if current user is 'root' or user is in sudo mode.
@@ -22,8 +22,11 @@ func Windows() bool {
 
 // WindowsWSL return true if running under Windows WSL env.
 func WindowsWSL() bool {
-	_, txt, err := exec.RunWithOutput("uname", "-r")
-	return err == nil && strings.Contains(txt, "windows_standard")
+	out, err := exec.Command("uname", "-r").Output()
+	if err != nil {
+		return false
+	}
+	return strings.Contains(string(out), "windows_standard")
 }
 
 // Unix returns true for Linux, Darwin, and Others Unix-like Platforms.
