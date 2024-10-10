@@ -1,5 +1,9 @@
 # CHANGELOG & HIS
 
+- v0.5.27
+  - security patch
+  - add more detectors such as is.Root(), is.Windows(), is.Bash(), ...
+
 - v0.5.26
   - security patch
 
