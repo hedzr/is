@@ -17,15 +17,14 @@
 package term
 
 import (
-	"golang.org/x/sys/unix"
 	"golang.org/x/term"
 )
 
-// IsTerminal return true if the file descriptor is terminal.
-func IsTerminal(fd uintptr) bool {
-	_, err := unix.IoctlGetTermios(int(fd), unix.TIOCGETA)
-	return err == nil
-}
+// // IsTerminal return true if the file descriptor is terminal.
+// func IsTerminal(fd uintptr) bool {
+// 	_, err := unix.IoctlGetTermios(int(fd), unix.TIOCGETA)
+// 	return err == nil
+// }
 
 // IsCygwinTerminal return true if the file descriptor is a cygwin or msys2
 // terminal. This is also always false on this environment.
@@ -33,8 +32,8 @@ func IsCygwinTerminal(fd uintptr) bool {
 	return false
 }
 
-// IsTerminal2 returns whether the given file descriptor is a terminal.
-func IsTerminal2(fd int) bool {
+// IsTerminal returns whether the given file descriptor is a terminal.
+func IsTerminal(fd int) bool {
 	return term.IsTerminal(fd)
 }
 
