@@ -4,6 +4,8 @@ import (
 	"io"
 	"os"
 
+	term2 "golang.org/x/term"
+
 	"github.com/hedzr/is/term"
 	"github.com/hedzr/is/term/color"
 )
@@ -51,15 +53,22 @@ func GetTtySizeByFd(fd uintptr) (cols, rows int, err error) { return term.GetTty
 // if windows golang executable file is running via double click or from cmd/shell terminator
 func StartupByDoubleClick() bool { return term.IsStartupByDoubleClick() }
 
+// CygwinTerminal return true if the file descriptor is a cygwin or msys2
+// terminal. This is also always false on this environment.
+func CygwinTerminal(fd uintptr) bool {
+	return false
+}
+
+// Terminal returns whether the given file descriptor is a terminal.
 // Terminal detects if a file is a terminal device (tty)
 func Terminal(f *os.File) bool {
-	ret := term.IsTerminal(f.Fd())
+	ret := term2.IsTerminal(int(f.Fd()))
 	return ret
 }
 
 // TerminalFd detects if a file-descriptor is a terminal device (tty)
 func TerminalFd(fd uintptr) bool {
-	ret := term.IsTerminal(fd)
+	ret := term.IsTerminal(int(fd))
 	return ret
 }
 
