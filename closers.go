@@ -103,7 +103,7 @@ type signalS struct{}
 //		  catcher.WithVerboseFn(func(msg string, args ...any) {
 //		    logz.Debug(fmt.Sprintf("[verbose] %s", fmt.Sprintf(msg, args...)))
 //		  }).
-//	   WithSignalCaught(func(sig os.Signal, wg *sync.WaitGroup) {
+//		  WithOnSignalCaught(func(sig os.Signal, wg *sync.WaitGroup) {
 //		    println()
 //		    logz.Debug("signal caught", "sig", sig)
 //		    if err := server.Shutdown(); err != nil {
