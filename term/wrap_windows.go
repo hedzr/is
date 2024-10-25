@@ -6,6 +6,10 @@
 package term
 
 import (
+	"os"
+	"syscall"
+	"unsafe"
+
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -21,11 +25,29 @@ import (
 // 	return
 // }
 
+func GetTtySizeByName(fn string) (cols, rows int, err error) {
+	cols, rows = GetTtySize()
+	return
+}
+
+func GetTtySizeByFile(outf *os.File) (cols, rows int, err error) { return getDeviceSize(outf) }
+func GetTtySizeByFd(fd uintptr) (cols, rows int, err error)      { return GetFdSize(fd) }
+
 // GetTtySize returns the window size in columns and rows in the active console window.
 // The return value of this function is in the order of cols, rows.
 func GetTtySize() (cols, rows int) {
 	// return 0, 0
 	cols, rows, _ = terminal.GetSize(0) // https://stackoverflow.com/a/45422726/6375060
+	return
+}
+
+func getDeviceSize(outf *os.File) (cols, rows int, err error) {
+	out := outf.Fd()
+	return getFdSize(out)
+}
+
+func getFdSize(fd uintptr) (cols, rows int, err error) {
+	cols, rows, _ = terminal.GetSize(int(fd))
 	return
 }
 

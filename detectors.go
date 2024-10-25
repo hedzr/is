@@ -30,6 +30,8 @@ func WindowsWSL() bool {
 }
 
 // Unix returns true for Linux, Darwin, and Others Unix-like Platforms.
+//
+// [NOTE] for unix platforms, more assetions and tests needed.
 func Unix() bool {
 	return runtime.GOOS == "linux" || runtime.GOOS == "darwin" || runtime.GOOS == "unix"
 }

@@ -151,8 +151,10 @@ func (s signalS) Catch(sig ...os.Signal) basics.Catcher {
 //
 //	// at somewhere you raise it manually
 //	stopChan <- syscall.SYSINT
+//
+// To raise an OS signal is not support on Windows.
 func (s signalS) Raise(sig syscall.Signal) error {
-	return syscall.Kill(os.Getpid(), sig)
+	return basics.Raise(sig)
 }
 
 // RaiseSignal should throw a POSIX signal to current process.
