@@ -1,5 +1,10 @@
 # CHANGELOG & HIS
 
+- v0.5.29
+  - security patch
+  - add full-platforms testing and building helpers
+  - fix building on windows
+
 - v0.5.27
   - security patch
   - add more detectors such as is.Root(), is.Windows(), is.Bash(), ...
