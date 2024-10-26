@@ -21,6 +21,7 @@ man*/
 go.work*
 *.local
 .env*
+lint.txt
 
 *-master
 *-devel
