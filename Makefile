@@ -8,7 +8,7 @@
 # ref: https://kodfabrik.com/journal/a-good-makefile-for-go/
 
 PROJECTNAME       = $(shell basename "$(PWD)")
-DEFAULT_DOC_NAME ?= ./cli/wzstore/doc.go
+DEFAULT_DOC_NAME ?= ./_examples/small/doc.go
 APPNAME           = $(shell grep -E "appName[ \t]+=[ \t]+" $(DEFAULT_DOC_NAME)|grep -Eo "\\\".+\\\"")
 VERSION           = $(shell grep -E "version[ \t]+=[ \t]+" $(DEFAULT_DOC_NAME)|grep -Eo "[0-9.]+")
 
