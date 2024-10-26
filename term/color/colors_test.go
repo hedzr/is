@@ -2,7 +2,24 @@ package color
 
 import (
 	"testing"
+
+	"github.com/hedzr/is/term"
 )
+
+func TestIsAnsiEscaped(t *testing.T) {
+	for i, tc := range []struct {
+		src    string
+		expect bool
+	}{
+		{"", false},
+		{GetCPT().Translate(`<code>code</code>`, FgDefault), true},
+	} {
+		got := term.IsAnsiEscaped(tc.src)
+		if got != tc.expect {
+			t.Fatalf("%5d. IsAnsiEscaped(%q) failed: expecting '%v' but got '%v'", i, tc.src, tc.expect, got)
+		}
+	}
+}
 
 func TestHighlight(t *testing.T) {
 	Highlight("Highlight: hello, %v!", "world")
