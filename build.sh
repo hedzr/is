@@ -19,6 +19,12 @@ APPS=(small)
 
 # LDFLAGS = -s -w -X 'github.com/hedzr/cmdr/v2/conf.Buildstamp=2024-10-25T18:09:06+08:00' -X 'github.com/hedzr/cmdr/v2/conf.GIT_HASH=580ca50' -X 'github.com/hedzr/cmdr/v2/conf.GitSummary=580ca50-dirty' -X 'github.com/hedzr/cmdr/v2/conf.GitDesc=580ca50 upgrade deps' -X 'github.com/hedzr/cmdr/v2/conf.BuilderComments=' -X 'github.com/hedzr/cmdr/v2/conf.GoVersion=go version go1.22.7 darwin/arm64' -X 'github.com/hedzr/cmdr/v2/conf.Version=0.5.1'
 
+extract-app-version() {
+	local DEFAULT_DOC_NAME="${DEFAULT_DOC_NAME:-${1:-slog/doc.go}}"
+	APPNAME="$(grep -E "appName[ \t]+=[ \t]+" ${DEFAULT_DOC_NAME} | grep -Eo "\\\".+\\\"")"
+	VERSION="$(grep -E "version[ \t]+=[ \t]+" ${DEFAULT_DOC_NAME} | grep -Eo "[0-9.]+")"
+}
+
 build-all-platforms() {
 	local W_PKG=github.com/hedzr/cmdr/v2/conf
 	local TIMESTAMP="$(date -u '+%Y-%m-%dT%H:%M:%S')"
@@ -29,6 +35,8 @@ build-all-platforms() {
 	local GIT_DESC="$(git log --oneline -1)"
 	local GIT_HASH="$(git rev-parse HEAD)"
 	local GOBUILD_TAGS=-tags="hzstudio sec antonal"
+	extract-app-version
+	tip "APPNAME = $APPNAME, VERSION = $VERSION"
 	local LDFLAGS="-s -w -X '${W_PKG}.Buildstamp=$TIMESTAMP' \
 		-X '${W_PKG}.GIT_HASH=$GIT_REVISION' \
 		-X '${W_PKG}.GitSummary=$GIT_SUMMARY' \
