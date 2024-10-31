@@ -12,6 +12,7 @@
 
 - `is.State(which) bool`: the universal detector entry - via `RegisterStateGetter(state string, getter func() bool)` to add your own ones. *Since v0.5.11*
 - `is.Env()` holds a global struct for CLI app basic states, such as: verbose/quiet/debug/trace....
+  - `DebugMode`/`DebugLevel`, `TraceMode`/`TraceLevel`, `ColorMode`, ...
 - `is.InDebugging() bool`, `is.InTesting() bool`, and `is.InTracing() bool`, ....
 - `is.DebugBuild() bool`.
 - `is.K8sBuild() bool`, `is.DockerBuild() bool`, ....
@@ -21,9 +22,17 @@
 - stringtool: `RandomStringPure`, case-converters ...
 - basics: closable, closer, signals.
   - easier `Press any key to exit...` prompt: `is.Signals().Catch()`
+- exec: Run, RunWithOutput, Sudo, ...
 - go 1.22.7+ required
 
 To using environment detecting utilities better and smoother, some terminal (and stringtool, basics) tools are bundled together.
+
+Since v0.6.0, `is.InDebugging()` checks if the running process' parent is `dlv`.
+The old `DebugMode` and `DebugBuild` are still work:
+
+- `InDebugging`: checks this process is being debugged by `dlv`.
+- `DebugBuild`: `-tags=delve` is set at building.
+- `DebugMode`: `--debug` is specified at command line.
 
 ## Usages
 
