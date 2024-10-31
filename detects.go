@@ -11,46 +11,38 @@ import (
 	"github.com/hedzr/is/states/trace"
 )
 
-// InDebugging returns status if debugger attached or is a debug build.
+// InDebugging and DebuggerAttached returns status if golang debugger 'dlv' is attached.
 //
-// To enable the debugger attached mode for cmdr, run `go build` with `-tags=delve` options. eg:
+// **Since v0.6.0**, InDebugging checks if the parent process is
+// 'dlv' or not. It supports Linux, Darwin and Windows currently.
 //
-//	go run -tags=delve ./cli
-//	go build -tags=delve -o my-app ./cli
+// If you're looking for old behavior, DebugBuild() returns if the
+// executable is built with delve tag:
 //
-// For Goland, you can enable this under 'Run/Debug Configurations', by adding the following into 'Go tool arguments:'
+//	 When you runs `go build` with `-tags=delve` options. eg:
 //
-//	-tags=delve
+//		go run -tags=delve ./cli
+//		go build -tags=delve -o my-app ./cli
 //
-// InDebugging() is a synonym to DebuggerAttached().
-//
-// NOTE that `isdelve` algor is from https://stackoverflow.com/questions/47879070/how-can-i-see-if-the-goland-debugger-is-running-in-the-program
-//
-// To check wildly like cli app debug mode (via --debug), call InDebugMode.
-//
-// To find the parent process is dlv (that is, detecting a real debugger present), another library needed.
+//	 The executable will hold a 'isdelve' tag. For more details please goto
+//	 https://stackoverflow.com/questions/47879070/how-can-i-see-if-the-goland-debugger-is-running-in-the-program
 func InDebugging() bool {
-	return states.Env().InDebugging() // isdelve.Enabled
+	return states.IsUnderDebugger()
 }
 
 // DebuggerAttached returns status if debugger attached or is a debug build.
 //
 // See also InDebugging.
-//
-// # To check wildly like cli app debug mode (via --debug), call InDebugMode
-//
-// To find the parent process is dlv (that is, detecting a real debugger present), another library needed.
 func DebuggerAttached() bool {
-	return states.Env().InDebugging() // isdelve.Enabled
+	return states.IsUnderDebugger()
 }
 
-// InDebugMode returns if:
+// InDebugMode and DebugMode returns true if:
 //
-//   - debugger attached
-//   - a debug build
+//   - a debug build, see the DebugBuild.
 //   - SetDebugMode(true) called.
 //
-// To find the parent process is dlv (that is, detecting a real debugger present), another library needed.
+// **NOTE** Since v0.6.0, InDebugMode does not check DebuggerAttached.
 func InDebugMode() bool {
 	return states.Env().GetDebugMode() // isdelve.Enabled
 }
