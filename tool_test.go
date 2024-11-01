@@ -346,7 +346,7 @@ CASE4:
 }
 
 func TestDetectors(t *testing.T) {
-	// t.Logf("os.args: %v", os.Args)
+	t.Logf("os.args: %v", os.Args)
 	assertEqual(t, true, InTesting())
 	t.Logf(`
 	InDebugging:         %v, DebuggerAttached: %v, InDebugMode: %v,
@@ -383,19 +383,23 @@ func TestDetectors(t *testing.T) {
 		InDevelopingTime(),
 		InDockerEnvSimple(),
 		InVscodeTerminal(),
+
 		InK8s(), InK8sYN(),
 		InIstio(),
 		InDocker(),
 		DockerBuild(),
 		K8sBuild(),
 		IstioBuild(),
+
 		DebugBuild(),
 		VerboseBuild(),
+
 		VerboseModeEnabled(), GetVerboseLevel(),
 		QuietModeEnabled(), GetQuietLevel(),
 		NoColorMode(), GetNoColorLevel(),
 		DebugMode(), GetDebugLevel(),
 		TraceMode(), GetTraceLevel(),
+
 		States(),
 		Env(),
 	)

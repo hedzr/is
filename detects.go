@@ -61,7 +61,7 @@ func InTestingT(args []string) bool {
 	case "windows":
 		if strings.HasSuffix(args[0], ".test.exe") {
 			for _, s := range args {
-				if strings.HasPrefix(s, "-test.v") || strings.HasPrefix(s, "-test.run") {
+				if strings.HasPrefix(s, "-test.") {
 					return true
 				}
 			}
@@ -73,7 +73,7 @@ func InTestingT(args []string) bool {
 			// !strings.Contains(SavedOsArgs[0], "/T/go-build")
 
 			for _, s := range args {
-				if strings.HasPrefix(s, "-test.v") || strings.HasPrefix(s, "-test.run") {
+				if strings.HasPrefix(s, "-test.") {
 					return true
 				}
 			}
