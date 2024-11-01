@@ -346,6 +346,7 @@ CASE4:
 }
 
 func TestDetectors(t *testing.T) {
+	t.Logf("os.args: %v", os.Args)
 	assertEqual(t, true, InTesting())
 	t.Logf(`
 	InDebugging:         %v, DebuggerAttached: %v, InDebugMode: %v,

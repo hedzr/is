@@ -2,6 +2,7 @@ package is
 
 import (
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -56,19 +57,29 @@ func InTracing() bool {
 
 // InTestingT detects whether is running under 'go test' mode
 func InTestingT(args []string) bool {
-	if !strings.HasSuffix(args[0], ".test") &&
-		!strings.Contains(args[0], "/T/___Test") {
-		// [0] = /var/folders/td/2475l44j4n3dcjhqbmf3p5l40000gq/T/go-build328292371/b001/exe/main
-		// !strings.Contains(SavedOsArgs[0], "/T/go-build")
-
-		for _, s := range args {
-			if s == "-test.v" || s == "-test.run" {
-				return true
+	switch runtime.GOOS {
+	case "windows":
+		if strings.HasSuffix(args[0], ".test.exe") {
+			for _, s := range args {
+				if strings.HasPrefix(s, "-test.v") || strings.HasPrefix(s, "-test.run") {
+					return true
+				}
 			}
 		}
-		return false
+	default:
+		if strings.HasSuffix(args[0], ".test") ||
+			strings.Contains(args[0], "/T/___Test") {
+			// [0] = /var/folders/td/2475l44j4n3dcjhqbmf3p5l40000gq/T/go-build328292371/b001/exe/main
+			// !strings.Contains(SavedOsArgs[0], "/T/go-build")
+
+			for _, s := range args {
+				if strings.HasPrefix(s, "-test.v") || strings.HasPrefix(s, "-test.run") {
+					return true
+				}
+			}
+		}
 	}
-	return true
+	return false
 }
 
 // InTesting detects whether is running under go test mode
