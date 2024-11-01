@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/term"
 
 	"github.com/hedzr/is/stringtool"
@@ -87,7 +86,7 @@ func testIsTerminal(t *testing.T) {
 
 	if runtime.GOOS == "darwin" {
 		f := os.Stdout
-		t.Logf("stdout is terminal: %v", terminal.IsTerminal(int(f.Fd())))
+		// t.Logf("stdout is terminal: %v", terminal.IsTerminal(int(f.Fd())))
 
 		stat, _ := f.Stat()
 		mod := stat.Mode()
@@ -140,9 +139,10 @@ func winSize(t *testing.T, what string, f *os.File) {
 
 func v(t *testing.T, what string, f *os.File) {
 	fd := int(f.Fd())
-	t.Logf("IsTerminal(%q): %v / %v (mine), %v (golang.org/x/crypto/ssh/terminal), %v (golang.org/x/term)",
+	t.Logf("IsTerminal(%q): %v / %v (mine), %v (ignore), %v (golang.org/x/term)",
 		what, Terminal(f), TerminalFd(f.Fd()),
-		terminal.IsTerminal(fd), term.IsTerminal(fd),
+		"", // terminal.IsTerminal(fd),
+		term.IsTerminal(fd),
 	)
 }
 
@@ -346,7 +346,7 @@ CASE4:
 }
 
 func TestDetectors(t *testing.T) {
-	t.Logf("os.args: %v", os.Args)
+	// t.Logf("os.args: %v", os.Args)
 	assertEqual(t, true, InTesting())
 	t.Logf(`
 	InDebugging:         %v, DebuggerAttached: %v, InDebugMode: %v,

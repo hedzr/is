@@ -9,11 +9,18 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"runtime"
 	"sync"
 	"syscall"
-
-	"github.com/hedzr/is"
 )
+
+func isRoot() bool {
+	return isUnix() && os.Getuid() == 0
+}
+
+func isUnix() bool {
+	return runtime.GOOS == "linux" || runtime.GOOS == "darwin" || runtime.GOOS == "unix"
+}
 
 // Run runs an OS command
 func Run(command string, arguments ...string) (err error) {
@@ -23,7 +30,7 @@ func Run(command string, arguments ...string) (err error) {
 
 // Sudo runs an OS command with sudo prefix
 func Sudo(command string, arguments ...string) (retCode int, stdoutText string, err error) {
-	if is.Root() {
+	if isRoot() {
 		retCode, stdoutText, err = RunCommand(command, true, arguments...)
 		return
 	}
