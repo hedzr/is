@@ -4,6 +4,7 @@
   - [BREAK] `is.InDebugging()` checks if the parent process is 'dlv' now.
     - To detect 'isdevel' mode, use `DebugBuild()`
   - added a lite `exec` subpackage.
+  - fix `InTesting` on windows and others.
 
 - v0.5.29
   - security patch
