@@ -27,6 +27,17 @@ import (
 //
 //	 The executable will hold a 'isdelve' tag. For more details please goto
 //	 https://stackoverflow.com/questions/47879070/how-can-i-see-if-the-goland-debugger-is-running-in-the-program
+//
+// Performance Note:
+//
+// For security reason InDebugging checks the debuggers lively. It might
+// take unexpected times for detecting.
+//
+// Debug States:
+//
+//  1. is.InDebugging, loaded by a golang debugger (dlv) at runtime?
+//  2. is.DebugBuild, build tags decide it
+//  3. is.DebugMode, set by command line flag `--debug`
 func InDebugging() bool {
 	return states.IsUnderDebugger()
 }
