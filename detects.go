@@ -102,6 +102,22 @@ func InTesting() bool {
 	// return true
 }
 
+func InBenchmark() bool { return isInBench(os.Args) }
+
+func isInBench(args []string) bool {
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "-test.bench") || strings.HasPrefix(arg, "-bench") {
+			return true
+		}
+		// if strings.HasPrefix(arg, "-test.bench=") {
+		// 	// ignore the benchmark name after an underscore
+		// 	bench = strings.SplitN(arg[12:], "_", 2)[0]
+		// 	break
+		// }
+	}
+	return false
+}
+
 // InDevelopingTime detects whether is in developing time (debugging or testing).
 //
 // If the main program has been built as an executable binary, we
@@ -109,7 +125,7 @@ func InTesting() bool {
 //
 // If GetDebugMode() is true, that's in developing time too.
 func InDevelopingTime() (status bool) {
-	return InDebugging() || InDebugMode() || InTesting()
+	return InDebugMode() || InTesting() || InBenchmark() || InDebugging()
 }
 
 // InDockerEnvSimple detects whether is running within docker
