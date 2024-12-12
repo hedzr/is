@@ -1,5 +1,8 @@
 # CHANGELOG & HIS
 
+- v0.6.3
+  - security patch
+
 - v0.6.2
   - added `is.InBenchmark`
   - added Performance Note for `is.InDebugging`
