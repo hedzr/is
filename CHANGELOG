@@ -1,4 +1,7 @@
-# CHANGELOG & HIS
+# CHANGELOG & HISTORY
+
+- v0.6.7
+  - fix `ToBool`
 
 - v0.6.6
   - security patch
