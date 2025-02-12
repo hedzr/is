@@ -6,7 +6,7 @@ go 1.22.7
 
 require (
 	golang.org/x/crypto v0.33.0
-	golang.org/x/net v0.34.0
+	golang.org/x/net v0.35.0
 	golang.org/x/term v0.29.0
 )
 
