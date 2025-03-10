@@ -63,7 +63,8 @@ func getTtySize(device string) (cols, rows int, err error) {
 	var outf *os.File
 	outf, err = os.OpenFile(device, os.O_WRONLY, 0)
 	if err != nil {
-		slog.Error("err", "err", err)
+		slog.Warn("CANNOT getTtySize", "err", err)
+		err = nil
 		return
 	}
 	defer outf.Close()
