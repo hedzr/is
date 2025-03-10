@@ -1,5 +1,9 @@
 # CHANGELOG & HISTORY
 
+- v0.6.13
+  - fix getTtySize in darwin (some exception cases such as goland new run/debug console tab)
+  - security patch
+
 - v0.6.10
   - security patch
 
