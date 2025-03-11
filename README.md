@@ -23,7 +23,8 @@
 - basics: closable, closer, signals.
   - easier `Press any key to exit...` prompt: `is.Signals().Catch()`
 - exec: Run, RunWithOutput, Sudo, ...
-- go 1.22.7+ required
+- go1.23.7+ required since v0.7.0
+- ~~go 1.22.7+ required~~
 
 To using environment detecting utilities better and smoother, some terminal (and stringtool, basics) tools are bundled together.
 
