@@ -1,8 +1,6 @@
 module github.com/hedzr/is
 
-go 1.23.0
-
-toolchain go1.23.7
+go 1.23.7
 
 //replace github.com/hedzr/env => ../libs.env
 
