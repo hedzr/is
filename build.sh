@@ -17,7 +17,7 @@ APPS=(small)
 # 	echo "$an //"
 # done
 
-# LDFLAGS = -s -w -X 'github.com/hedzr/cmdr/v2/conf.Buildstamp=2024-10-25T18:09:06+08:00' -X 'github.com/hedzr/cmdr/v2/conf.GIT_HASH=580ca50' -X 'github.com/hedzr/cmdr/v2/conf.GitSummary=580ca50-dirty' -X 'github.com/hedzr/cmdr/v2/conf.GitDesc=580ca50 upgrade deps' -X 'github.com/hedzr/cmdr/v2/conf.BuilderComments=' -X 'github.com/hedzr/cmdr/v2/conf.GoVersion=go version go1.22.7 darwin/arm64' -X 'github.com/hedzr/cmdr/v2/conf.Version=0.5.1'
+# LDFLAGS = -s -w -X 'github.com/hedzr/cmdr/v2/conf.Buildstamp=2024-10-25T18:09:06+08:00' -X 'github.com/hedzr/cmdr/v2/conf.GIT_HASH=580ca50' -X 'github.com/hedzr/cmdr/v2/conf.GitSummary=580ca50-dirty' -X 'github.com/hedzr/cmdr/v2/conf.GitDesc=580ca50 upgrade deps' -X 'github.com/hedzr/cmdr/v2/conf.BuilderComments=' -X 'github.com/hedzr/cmdr/v2/conf.GoVersion=go version go1.23.7 darwin/arm64' -X 'github.com/hedzr/cmdr/v2/conf.Version=0.5.1'
 
 extract-app-version() {
 	local DEFAULT_DOC_NAME="${DEFAULT_DOC_NAME:-${1:-slog/doc.go}}"
