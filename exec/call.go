@@ -2,7 +2,6 @@ package exec
 
 import (
 	"fmt"
-	"strings"
 )
 
 // Call executes the command line via system (OS).
@@ -61,6 +60,8 @@ func internalCallImpl(cmd []string, fn func(retCode int, stdoutText string), aut
 		}
 		return
 	}
-	fn(rc, str)
+	if fn != nil {
+		fn(rc, str)
+	}
 	return
 }
