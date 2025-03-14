@@ -14,7 +14,7 @@ import (
 //
 // Uses CallSlice if your args includes space (like 'c:/My Documents/')
 func Call(cmd string, fn func(retCode int, stdoutText string)) (err error) {
-	a := strings.Split(cmd, " ")
+	a := SplitCommandString(cmd)
 	err = internalCallImpl(a, fn, true)
 	return
 }
@@ -29,7 +29,7 @@ func Call(cmd string, fn func(retCode int, stdoutText string)) (err error) {
 //
 // Uses CallSliceQuiet if your args includes space (like 'c:/My Documents/')
 func CallQuiet(cmd string, fn func(retCode int, stdoutText string)) (err error) {
-	a := strings.Split(cmd, " ")
+	a := SplitCommandString(cmd)
 	err = internalCallImpl(a, fn, false)
 	return
 }
