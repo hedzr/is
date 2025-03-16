@@ -1,5 +1,10 @@
 # CHANGELOG & HISTORY
 
+- v0.7.1
+  - fix `Call`/`CallQuiet` for better splitting cmdline to array
+  - fix `Call` if fn is nil
+  - improved test for `SplitCommandString()`
+
 - v0.7.0
   - upgrade minimal toolchain to go1.23.7
   - security patch
