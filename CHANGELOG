@@ -1,8 +1,11 @@
 # CHANGELOG & HISTORY
 
+- v0.7.5
+  - fix version number
+
 - v0.7.3
   - add `Signals.WithOnLoopFunc & WaitFor(onLoopFunc)`, old `WithOnLoop & Wait` are deprecated from now on
-  - security patch
+  - improved `SplitCommandString` and its doc
 
 - v0.7.1
   - fix `Call`/`CallQuiet` for better splitting cmdline to array
