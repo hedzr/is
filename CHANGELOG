@@ -1,5 +1,9 @@
 # CHANGELOG & HISTORY
 
+- v0.7.3
+  - add `Signals.WithOnLoopFunc & WaitFor(onLoopFunc)`, old `WithOnLoop & Wait` are deprecated from now on
+  - security patch
+
 - v0.7.1
   - fix `Call`/`CallQuiet` for better splitting cmdline to array
   - fix `Call` if fn is nil
