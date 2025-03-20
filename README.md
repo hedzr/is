@@ -81,40 +81,36 @@ func main() {
     catcher := is.Signals().Catch()
     catcher.
         WithPrompt("Press CTRL-C to quit...").
-        WithOnLoop(dbStarter, cacheStarter, mqStarter).
+        WithOnLoopFunc(dbStarter, cacheStarter, mqStarter).
         WithOnSignalCaught(func(sig os.Signal, wg *sync.WaitGroup) {
             println()
             slog.Info("signal caught", "sig", sig)
             cancel() // cancel user's loop, see Wait(...)
         }).
-        Wait(func(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
+        WaitFor(func(closer func()) {
             slog.Debug("entering looper's loop...")
-            go func() {
-                // to terminate this app after a while automatically:
-                time.Sleep(10 * time.Second)
-                stopChan <- os.Interrupt
-            }()
-            <-ctx.Done()  // waiting until any os signal caught
-            wgDone.Done() // and complete myself
+            defer close() // notify catcher we want to shutdown
+            // to terminate this app after a while automatically:
+            time.Sleep(10 * time.Second)
         })
 }
 
-func dbStarter(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
+func dbStarter(closer func()) {
+	defer closer()
     // initializing database connections...
     // ...
-    wgDone.Done()
 }
 
-func cacheStarter(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
+func cacheStarter(closer func()) {
+	defer closer()
     // initializing redis cache connections...
     // ...
-    wgDone.Done()
 }
 
-func mqStarter(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
+func mqStarter(closer func()) {
+	defer closer()
     // initializing message queue connections...
     // ...
-    wgDone.Done()
 }
 ```
 
@@ -332,10 +328,10 @@ func main() {
             }
             cancel()
         }).
-        Wait(func(stopChan chan<- os.Signal, wgShutdown *sync.WaitGroup) {
+        WaitFor(func(closer func()) {
             logz.Debug("entering looper's loop...")
 
-            server.WithOnShutdown(func(err error, ss net.Server) { wgShutdown.Done() })
+            server.WithOnShutdown(func(err error, ss net.Server) { closer() })
             err := server.ListenAndServe(ctx, nil)
             if err != nil {
                 logz.Fatal("server serve failed", "err", err)
