@@ -197,7 +197,7 @@ func trimQuotes(s string) string {
 //	println(out)   // will got: []string{ "bash", "-c", "echo hello world!"}
 func SplitCommandString(s string, quoteChars ...rune) []string {
 	var qc rune = '"'
-	var m = map[rune]bool{qc: true}
+	var m = map[rune]bool{qc: true, '\'': true}
 	for _, q := range quoteChars {
 		qc, m[q] = q, true //nolint:ineffassign
 	}
