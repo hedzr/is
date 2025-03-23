@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"sync"
 	"syscall"
 )
@@ -107,16 +108,20 @@ func RunCommandFull(command string, readStdout bool, arguments ...string) (retCo
 	// Do not use cmd.Run()
 	if err = cmd.Start(); err != nil {
 		// Problem while copying stdin, stdout, or stderr
-		return 0, "", "", fmt.Errorf("%q failed: %w", command, err)
+		return 0, "", "",
+			fmt.Errorf("%q failed: %w\n    cmd-line: [%v %v]", command, err, command, arguments)
 	}
 
+	isLaunchctl := command == "launchctl" ||
+		(strings.HasSuffix(command, "/sudo") && len(arguments) > 0 && arguments[0] == "launchctl")
 	// Zero exit status
 	// Darwin: launchctl can fail with a zero exit status,
 	// so check for emtpy stderr
-	if command == "launchctl" {
+	if isLaunchctl {
 		slurpText, _ := io.ReadAll(stderr)
 		if len(slurpText) > 0 && !bytes.HasSuffix(slurpText, []byte("Operation now in progress\n")) {
-			return 0, "", "", fmt.Errorf("%q failed with stderr: %s", command, slurpText)
+			return 0, "", "",
+				fmt.Errorf("%q failed with stderr: %s\n    cmd-line: [%v %v]", command, slurpText, command, arguments)
 		}
 	}
 
@@ -127,13 +132,19 @@ func RunCommandFull(command string, readStdout bool, arguments ...string) (retCo
 	if err = cmd.Wait(); err != nil {
 		exitStatus, ok := IsExitError(err)
 		if ok {
+			if isLaunchctl || exitStatus == 3 {
+				exitStatus = 0
+				return exitStatus, output.String(), slurp.String(), nil
+			}
 			// CmdS didn't exit with a zero exit status.
-			return exitStatus, output.String(), slurp.String(), fmt.Errorf("%q failed with stderr:\n%v\n %w", command, slurp.String(), err)
+			return exitStatus, output.String(), slurp.String(),
+				fmt.Errorf("%q failed with stderr:\n%v\n %w\n    cmd-line: [%v %v]", command, slurp.String(), err, command, arguments)
 		}
 
 		// An error occurred and there is no exit status.
 		// return 0, output, fmt.Errorf("%q failed: %v |\n  stderr: %s", command, err.Error(), slurp)
-		return 0, output.String(), slurp.String(), fmt.Errorf("%q failed with stderr:\n%v\n  %w", command, slurp.String(), err)
+		return 0, output.String(), slurp.String(),
+			fmt.Errorf("%q failed with stderr:\n%v\n  %w\n    cmd-line: [%v %v]", command, slurp.String(), err, command, arguments)
 	}
 
 	// if readStdout {
