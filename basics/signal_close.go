@@ -65,13 +65,16 @@ import (
 //
 //	basics.VerboseFn = t.Logf
 //	is.Signals().Catch().
-//		WithPrompt().
-//		Wait(func(stopChan chan<- os.Signal) {
-//			basics.VerboseFn("[cb] raising interrupt after a second...")
-//			time.Sleep(2500 * time.Millisecond)
-//			stopChan <- os.Interrupt
-//			basics.VerboseFn("[cb] raised.")
-//		})
+//	  WithPrompt().
+//	  WaitFor(func(closer func()) {
+//	    go func() {
+//	      defer closer()
+//	      basics.VerboseFn("[cb] raising interrupt after a second...")
+//	      time.Sleep(2500 * time.Millisecond)
+//	      <-ctx.Done() // waiting for main program stop.
+//	      basics.VerboseFn("[cb] raised.")
+//	    }()
+//	  })
 //
 // A simple details can be found at:
 //
@@ -135,11 +138,11 @@ type Catcher interface {
 	//
 	//	is.Signals().Catch().
 	//	    WithOnLoop(redisStarter, etcdStarter, mongoStarter, dbStarter).
-	//	    Wait(func(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
+	//	    WaitFor(func(closer func()) {
 	//	        // pop3server.Debug("entering looper's loop...")
 	//
 	//	        // setup handler: close catcher's waiting looper while 'pop3server' shut down
-	//	        pop3server.WithOnShutdown(func(err error, ss net.Server) { wgShutdown.Done() })
+	//	        pop3server.WithOnShutdown(func(err error, ss net.Server) { closer() })
 	//
 	//	        go func() {
 	//	            err := pop3server.ListenAndServe(ctx, nil)
