@@ -168,7 +168,34 @@ type Catcher interface {
 	//
 	// Deprecated since v0.7.3
 	Wait(stopperHandler OnLooper)
-	// WaitFor _
+	// WaitFor with param `cb func(closer func())` is used for your task.
+	//
+	// You should put your long-term codes inside `cb` of WaitFor(cb), and
+	// defer call to `closer()` in. The `closer()` is a param of `cb`.
+	//
+	// A sample code is,
+	//
+	//	WaitFor(func(closer func()) {
+	//	  defer closer()
+	//	  for{
+	//	  case <-ticker.C:
+	//	    wakeupForTask()
+	//	  case <-ctx.Done():
+	//	    return
+	//	  }
+	//	})
+	//
+	// A http server could be:
+	//
+	//	WaitFor(func(closer func()) {
+	//	   logz.Debug("entering looper's loop...")
+	//
+	//	   server.WithOnShutdown(func(err error, ss net.Server) { closer() })
+	//	   err := server.ListenAndServe(ctx, nil)
+	//	   if err != nil {
+	//	     logz.Fatal("server serve failed", "err", err)
+	//	   }
+	//	})
 	WaitFor(mainLooper OnLooperFunc)
 }
 

@@ -61,7 +61,7 @@ type signalS struct{}
 
 // Signals returns a signals-helper so that you can catch them, and raise them later.
 //
-// Typically usage is `catcher := is.Signals().Catch(); ...`.
+// Typically, its usage is `catcher := is.Signals().Catch(); ...`.
 //
 // By default, catcher will listen on standard signals set: os.Interrupt,
 // os.Kill, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGINT.
@@ -73,6 +73,9 @@ type signalS struct{}
 // or:
 //
 //	is.Signals().Catch().WithSignals(os.Interrupt, os.Kill)
+//
+// You should put your long-term codes inside `cb` of WaitFor(cb), and
+// defer call to `closer()` in. The `closer()` is a param of `cb`.
 //
 // For example:
 //
