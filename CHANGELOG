@@ -1,5 +1,11 @@
 # CHANGELOG & HISTORY
 
+- v0.7.7
+  - is: downgrade to go1.23 instead of 1.23.7
+  - is: improved `RunCommandFull` to add more info if failed
+  - is: improve doc for `Signals().Catcher()`
+  - is/logg/store: fix/improve doc for `Signals().Catcher()`
+
 - v0.7.6
   - improved `SplitCommandString()`
 
