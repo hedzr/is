@@ -1,7 +1,7 @@
 # is
 
 [![Go](https://github.com/hedzr/is/actions/workflows/go.yml/badge.svg)](https://github.com/hedzr/is/actions/workflows/go.yml)
-![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/hedzr/store)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/hedzr/is)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/hedzr/is.svg?label=release)](https://github.com/hedzr/is/releases)
 [![go.dev](https://img.shields.io/badge/go-dev-green)](https://pkg.go.dev/github.com/hedzr/is)
 [![deps.dev](https://img.shields.io/badge/deps-dev-green)](https://deps.dev/go/github.com%2Fhedzr%2Fis)
@@ -96,19 +96,19 @@ func main() {
 }
 
 func dbStarter(closer func()) {
-	defer closer()
+ defer closer()
     // initializing database connections...
     // ...
 }
 
 func cacheStarter(closer func()) {
-	defer closer()
+ defer closer()
     // initializing redis cache connections...
     // ...
 }
 
 func mqStarter(closer func()) {
-	defer closer()
+ defer closer()
     // initializing message queue connections...
     // ...
 }
