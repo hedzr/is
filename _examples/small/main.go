@@ -67,6 +67,8 @@ func main() {
 			}()
 			<-ctx.Done() // waiting until any os signal caught
 			// wgDone.Done() // and complete myself
+
+			is.PressAnyKeyToContinue(os.Stdin)
 		})
 }
 
