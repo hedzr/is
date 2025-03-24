@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"time"
 
-	"gopkg.in/hedzr/errors.v3"
+	"errors"
 
 	"github.com/hedzr/is/exec"
 )
@@ -194,10 +194,12 @@ func FileExists(filePath string) bool {
 	return true
 }
 
+var emptyDirectory = errors.New("empty directory")
+
 // EnsureDir checks and creates the directory.
 func EnsureDir(d string) (err error) {
 	if d == "" {
-		return errors.NewLite("empty directory")
+		return emptyDirectory
 	}
 	if !FileExists(d) {
 		err = os.MkdirAll(d, 0755)
@@ -208,7 +210,7 @@ func EnsureDir(d string) (err error) {
 // EnsureDirEnh checks and creates the directory, via sudo if necessary.
 func EnsureDirEnh(d string) (err error) {
 	if d == "" {
-		return errors.NewLite("empty directory")
+		return emptyDirectory
 	}
 	if !FileExists(d) {
 		err = os.MkdirAll(d, 0755)
@@ -434,8 +436,8 @@ func forDirMaxLoops( //nolint:revive
 	cb func(depth int, dirName string, fi os.DirEntry) (stop bool, err error),
 	excludes ...string,
 ) (stop bool, err error) {
-	ec := errors.New(`forDirMaxLoops have errors`)
-	defer ec.Defer(&err)
+	var ec error = nil
+	// defer ec.Defer(&err)
 
 	for _, f := range dirs {
 		// Logger.Printf("  - %v", f.Name())
@@ -453,11 +455,16 @@ func forDirMaxLoops( //nolint:revive
 				return
 			}
 			if err = ForDirMax(d, initialDepth+1, maxDepth, cb); err != nil {
-				ec.Attach(err)
+				// ec.Attach(err)
+				if ec == nil {
+					ec = errors.New(`forDirMaxLoops have errors`)
+				}
+				ec = errors.Join(ec, err)
 			}
 		}
 	}
 
+	err = ec
 	return
 }
 
@@ -512,8 +519,9 @@ func forFileMaxR( //nolint:revive
 	cb func(depth int, dirName string, fi os.DirEntry) (stop bool, err error),
 	excludes ...string,
 ) (err error) {
-	ec := errors.New(`forFileMax have errors`)
-	defer ec.Defer(&err)
+	var ec error = nil
+	// ec := errors.New(`forFileMax have errors`)
+	// defer ec.Defer(&err)
 
 	var dirs []os.DirEntry
 	dirs, err = os.ReadDir(rootDir)
@@ -521,7 +529,6 @@ func forFileMaxR( //nolint:revive
 	// dirs, err = os.ReadDir(rootDir)
 	if err != nil {
 		// Logger.Fatalf("error in ForFileMax(): %v", err)
-		ec.Attach(err)
 		return
 	}
 
@@ -539,7 +546,11 @@ func forFileMaxR( //nolint:revive
 			}
 
 			if err = ForFileMax(d, initialDepth+1, maxDepth, cb, excludes...); err != nil {
-				ec.Attach(err)
+				// ec.Attach(err)
+				if ec == nil {
+					ec = errors.New(`forFileMax have errors`)
+				}
+				ec = errors.Join(ec, err)
 			}
 
 			continue
@@ -554,12 +565,17 @@ func forFileMaxR( //nolint:revive
 			// log.Infof(" - %s", f.Name())
 			// fi, _ := f.Info()
 			if stop, err = cb(initialDepth, rootDir, f); stop || err != nil {
-				ec.Attach(err)
+				// ec.Attach(err)
+				if ec == nil {
+					ec = errors.New(`forFileMax have errors`)
+				}
+				err = errors.Join(ec, err)
 				return
 			}
 		}
 	}
 
+	err = ec
 	return
 }
 

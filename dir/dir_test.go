@@ -5,14 +5,13 @@
 package dir_test
 
 import (
+	"errors"
 	"os"
 	"path"
 	"syscall"
 	"testing"
 
-	"gopkg.in/hedzr/errors.v3"
-
-	"github.com/hedzr/cmdr/v2/pkg/dir"
+	"github.com/hedzr/is/dir"
 )
 
 // TestIsDirectory tests more
@@ -61,10 +60,16 @@ func TestForDir(t *testing.T) {
 		return
 	})
 
-	if err != nil && !errors.TypeIs(err, &os.PathError{Err: syscall.ENOENT}) {
-		if err != nil && !errors.TypeIs(err, syscall.ENOENT) {
-			t.Errorf("wrong for ForDir(): %v", err)
+	// if err != nil && !errors.TypeIs(err, &os.PathError{Err: syscall.ENOENT}) {
+	// 	if err != nil && !errors.TypeIs(err, syscall.ENOENT) {
+	// 		t.Errorf("wrong for ForDir(): %v", err)
+	// 	}
+	// }
+	if err != nil {
+		if errors.Is(err, syscall.ENOENT) || errors.Is(err, &os.PathError{Err: syscall.ENOENT}) {
+			return
 		}
+		t.Errorf("wrong for ForDir(): %v", err)
 	}
 }
 
