@@ -1,7 +1,11 @@
 package is
 
 import (
+	"bufio"
+	"fmt"
+	"io"
 	"os"
+	"strings"
 	"syscall"
 
 	"github.com/hedzr/is/basics"
@@ -197,4 +201,26 @@ func (s signalS) CurrentProcess() *os.Process {
 		return nil
 	}
 	return p
+}
+
+// PressEnterToContinue lets program pause and wait for user's ENTER key press in console/terminal
+func PressEnterToContinue(in io.Reader, msg ...string) (input string) {
+	if len(msg) > 0 && len(msg[0]) > 0 {
+		fmt.Print(msg[0])
+	} else {
+		fmt.Print("Press 'Enter' to continue...")
+	}
+	b, _ := bufio.NewReader(in).ReadBytes('\n')
+	return strings.TrimRight(string(b), "\n")
+}
+
+// PressAnyKeyToContinue lets program pause and wait for user's ANY key press in console/terminal
+func PressAnyKeyToContinue(in io.Reader, msg ...string) (input string) {
+	if len(msg) > 0 && len(msg[0]) > 0 {
+		fmt.Print(msg[0])
+	} else {
+		fmt.Print("Press any key to continue...")
+	}
+	_, _ = fmt.Fscanf(in, "%s", &input)
+	return
 }
