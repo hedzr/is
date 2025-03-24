@@ -66,6 +66,11 @@ import (
 //	basics.VerboseFn = t.Logf
 //	is.Signals().Catch().
 //	  WithPrompt().
+//	  WithOnSignalCaught(func(sig os.Signal, wg *sync.WaitGroup) {
+//	    println()
+//	    slog.Info("signal caught", "sig", sig)
+//	    cancel() // cancel user's loop, see Wait(...)
+//	  }).
 //	  WaitFor(func(closer func()) {
 //	    go func() {
 //	      defer closer()
