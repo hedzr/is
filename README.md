@@ -92,6 +92,8 @@ func main() {
             defer close() // notify catcher we want to shutdown
             // to terminate this app after a while automatically:
             time.Sleep(10 * time.Second)
+
+            is.PressAnyKeyToContinue(os.Stdin)
         })
 }
 
