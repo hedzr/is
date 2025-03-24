@@ -1,5 +1,12 @@
 # CHANGELOG & HISTORY
 
+- v0.7.8
+  - improved doc of `Catch()`
+  - added `PressEnterToContinue`, `PressAnyKeyToContinue`
+  - added `UnescapeUnicode`, `UnescapeUnicodeInYamlDoc` to stringtool/
+  - added timing/ subpackage
+  - mv `cmdr/v2/pkg/dir` to `is/dir`
+
 - v0.7.7
   - is: downgrade to go1.23 instead of 1.23.7
   - is: improved `RunCommandFull` to add more info if failed
