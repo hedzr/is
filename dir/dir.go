@@ -566,10 +566,12 @@ func forFileMaxR( //nolint:revive
 			// fi, _ := f.Info()
 			if stop, err = cb(initialDepth, rootDir, f); stop || err != nil {
 				// ec.Attach(err)
-				if ec == nil {
-					ec = errors.New(`forFileMax have errors`)
+				if err != nil {
+					if ec == nil {
+						ec = errors.New(`forFileMax have errors`)
+					}
+					err = errors.Join(ec, err)
 				}
-				err = errors.Join(ec, err)
 				return
 			}
 		}
