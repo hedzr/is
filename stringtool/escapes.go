@@ -1,6 +1,6 @@
 // Copyright © 2023 Hedzr Yeh.
 
-package strings
+package stringtool
 
 import (
 	"regexp"
