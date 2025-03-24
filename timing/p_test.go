@@ -5,9 +5,10 @@
 package timing_test
 
 import (
-	"github.com/hedzr/log/timing"
 	"math/big"
 	"testing"
+
+	"github.com/hedzr/is/timing"
 )
 
 func vFactorial(t *testing.T, x *big.Int) *big.Int {

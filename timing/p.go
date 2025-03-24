@@ -5,7 +5,7 @@
 package timing
 
 import (
-	"github.com/hedzr/log"
+	"log"
 	"time"
 )
 
