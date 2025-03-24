@@ -1,6 +1,10 @@
 # CHANGELOG & HISTORY
 
-- v0.7.8
+- v0.7.9
+  - fix ref error in dir/ subpackage
+  - fix tests in dir/
+
+- v0.7.8 (failed)
   - improved doc of `Catch()`
   - added `PressEnterToContinue`, `PressAnyKeyToContinue`
   - added `UnescapeUnicode`, `UnescapeUnicodeInYamlDoc` to stringtool/
