@@ -1,7 +1,10 @@
 # CHANGELOG & HISTORY
 
+- v0.7.11
+  - security patch
+
 - v0.7.10
-  - is: fix unnecessary err if `forFileMaxR()` stopped
+  - fix unnecessary err if `forFileMaxR()` stopped
 
 - v0.7.9
   - fix ref error in dir/ subpackage
@@ -15,10 +18,10 @@
   - mv `cmdr/v2/pkg/dir` to `is/dir`
 
 - v0.7.7
-  - is: downgrade to go1.23 instead of 1.23.7
-  - is: improved `RunCommandFull` to add more info if failed
-  - is: improve doc for `Signals().Catcher()`
-  - is/logg/store: fix/improve doc for `Signals().Catcher()`
+  - downgrade to go1.23 instead of 1.23.7
+  - improved `RunCommandFull` to add more info if failed
+  - improve doc for `Signals().Catcher()`
+  - fix/improve doc for `Signals().Catcher()`
 
 - v0.7.6
   - improved `SplitCommandString()`
