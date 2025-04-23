@@ -20,7 +20,7 @@ import (
 // // ReadPassword reads the password from stdin with safe protection
 // func ReadPassword() (text string, err error) {
 // 	var bytePassword []byte
-// 	if bytePassword, err = terminal.ReadPassword(syscall.Stdin); err == nil {
+// 	if bytePassword, err = term.ReadPassword(syscall.Stdin); err == nil {
 // 		fmt.Println() // it's necessary to add a new line after user's input
 // 		text = string(bytePassword)
 // 	} else {

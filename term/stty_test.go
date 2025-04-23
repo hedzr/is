@@ -5,7 +5,6 @@ import (
 	"runtime"
 	"testing"
 
-	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/term"
 )
 
@@ -105,8 +104,8 @@ func winSize(t *testing.T, what string, f *os.File) {
 
 func v(t *testing.T, what string, f *os.File) {
 	fd := int(f.Fd())
-	t.Logf("IsTerminal(%q): %v (mine), %v (golang.org/x/crypto/ssh/terminal), %v (golang.org/x/term)",
+	t.Logf("IsTerminal(%q): %v (mine), %v (golang.org/x/term)",
 		what, IsTerminal(fd),
-		terminal.IsTerminal(fd), term.IsTerminal(fd),
+		term.IsTerminal(fd),
 	)
 }
