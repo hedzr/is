@@ -1,5 +1,10 @@
 # CHANGELOG & HISTORY
 
+- v0.7.18
+  - fix `is.DebuggerAttached()` under darwin
+  - improved and remove deprecated oper to `ioutil` package
+  - doc `dir.Exists`
+
 - v0.7.16
   - security patch
 
