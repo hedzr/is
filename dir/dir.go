@@ -174,13 +174,17 @@ func IsModeReadAll(mode os.FileMode) bool { return mode&0444 == 0444 }
 
 // Exists returns the existence of an directory or file.
 // See the short version FileExists.
-func Exists(filePath string) (fi os.FileInfo, exists bool, err error) {
+//
+// The returned err object is just for detailed purpose.
+// You should ignore it commonly since checking out a
+// nonexisted file will get existed == true and err != nil.
+func Exists(filePath string) (fi os.FileInfo, existed bool, err error) {
 	if fi, err = os.Stat(os.ExpandEnv(filePath)); err != nil {
 		if os.IsNotExist(err) {
 			return
 		}
 	}
-	exists = true
+	existed = true
 	return
 }
 
