@@ -18,7 +18,8 @@ func isDebuggerAttached() bool {
 			const title = `  UID   PID  PPID   C STIME   TTY           TIME ` // + `CMD`
 			lines := strings.Split(txt, "\n")
 			cmdline := lines[1][len(title):]
-			if strings.HasSuffix(cmdline, "/dlv") {
+			parts := strings.Split(cmdline, " ")
+			if strings.HasSuffix(parts[0], "/dlv") || strings.HasSuffix(parts[0], "debugserver") {
 				return true
 			}
 		}
