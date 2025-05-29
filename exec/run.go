@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -65,6 +64,8 @@ func New(opts ...Opt) *calling {
 
 func (c *calling) Run()                    { _ = c.run() }
 func (c *calling) RunAndCheckError() error { return c.run() }
+
+// func (c *calling) RunWith(ctx context.Context) error { return c.run(ctx) }
 
 func (c *calling) WithCommandArgs(cmd string, args ...string) *calling {
 	c.Cmd = exec.Command(cmd, args...)
@@ -193,7 +194,6 @@ type calling struct {
 }
 
 func (c *calling) run() (err error) {
-
 	err = c.runNow()
 
 	var ok, er bool
@@ -301,6 +301,7 @@ func (c *calling) runNow() error {
 		c.Cmd.Stderr = os.Stderr
 	}
 
+	// fmt.Printf("Starting: %q WITH '%v'\n", c.Cmd.Path, c.Cmd.Args)
 	if c.err = c.Cmd.Start(); c.err != nil {
 		// Problem while copying stdin, stdout, or stderr
 		c.err = fmt.Errorf("failed: %v, cmd: %q", c.err, c.Path)
@@ -311,7 +312,7 @@ func (c *calling) runNow() error {
 	// Darwin: launchctl can fail with a zero exit status,
 	// so check for emtpy stderr
 	if c.Path == "launchctl" {
-		slurpText, _ := ioutil.ReadAll(c.stderrPiper)
+		slurpText, _ := io.ReadAll(c.stderrPiper)
 		if len(slurpText) > 0 && !bytes.HasSuffix(slurpText, []byte("Operation now in progress\n")) {
 			c.err = fmt.Errorf("failed with stderr: %s, cmd: %q", slurpText, c.Path)
 			return c.err
