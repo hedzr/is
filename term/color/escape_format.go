@@ -65,6 +65,25 @@ type Translator interface {
 	WriteColor(out io.Writer, clr Color)   // echo ansi color bytes for foreground color
 	WriteBgColor(out io.Writer, clr Color) // echo ansi color bytes for background color
 	Reset(out io.Writer)                   // echo ansi color bytes for resetting color
+
+	Bold(out io.Writer, cb func(out io.Writer))
+	Italic(out io.Writer, cb func(out io.Writer))
+	Underline(out io.Writer, cb func(out io.Writer))
+	Inverse(out io.Writer, cb func(out io.Writer))
+	Dim(out io.Writer, cb func(out io.Writer))
+	Blink(out io.Writer, cb func(out io.Writer))
+	Bg(out io.Writer, bgColor Color, cb func(out io.Writer))
+
+	// TranslateTo(s string, initialState Color) string
+	TranslateTo(s string, initialState Color) string // translate a string with html tags to a colored string
+
+	StripLeftTabsAndColorize(s string) string // strip left tabs and colorize the string
+	StripLeftTabs(s string) string            // strip left tabs and colorize the string
+	StripLeftTabsOnly(s string) string        // strip left tabs only
+
+	stripHTMLTags(s string) string // aggressively strip HTML tags from a string
+	ToColorString(clr Color) string
+	ToColorInt(s string) Color
 }
 
 func GetDummyTranslator() Translator { return dummy } // return Translator for displaying plain text without color
@@ -73,13 +92,43 @@ var dummy dummyS
 
 type dummyS struct{}
 
-func (dummyS) Translate(s string, initialFg Color) string        { return s }                       //nolint:revive
+// stripHTMLTags implements Translator.
+func (c dummyS) stripHTMLTags(s string) string {
+	panic("unimplemented")
+}
+
+func (dummyS) Translate(s string, initialFg Color) string        { return s } //nolint:revive
+func (dummyS) TranslateTo(s string, initialState Color) string   { return s }
 func (dummyS) ColoredFast(out io.Writer, clr Color, text string) { _, _ = out.Write([]byte(text)) } //nolint:revive
 func (dummyS) DimFast(out io.Writer, text string)                { _, _ = out.Write([]byte(text)) }
 func (dummyS) HighlightFast(out io.Writer, text string)          { _, _ = out.Write([]byte(text)) }
 func (dummyS) WriteColor(out io.Writer, clr Color)               {} //nolint:revive
 func (dummyS) WriteBgColor(out io.Writer, clr Color)             {} //nolint:revive
 func (dummyS) Reset(out io.Writer)                               {} //nolint:revive
+func (dummyS) ToColorInt(s string) Color                         { return cptNC.toColorInt(s) }
+func (dummyS) ToColorString(clr Color) string                    { return cptNC.toColorString(clr) }
+
+func (c dummyS) StripLeftTabsAndColorize(s string) string { return cptNC.StripLeftTabsAndColorize(s) }
+func (c dummyS) StripLeftTabs(s string) string            { return StripLeftTabs(s) }
+func (c dummyS) StripLeftTabsOnly(s string) string        { return StripLeftTabsOnly(s) }
+func (c dummyS) StripHTMLTags(s string) string            { return StripHTMLTags(s) }
+
+func (c dummyS) Bold(out io.Writer, cb func(out io.Writer))      { c.bg(out, BgBoldOrBright, cb) }
+func (c dummyS) Italic(out io.Writer, cb func(out io.Writer))    { c.bg(out, BgItalic, cb) }
+func (c dummyS) Underline(out io.Writer, cb func(out io.Writer)) { c.bg(out, BgUnderline, cb) }
+func (c dummyS) Inverse(out io.Writer, cb func(out io.Writer))   { c.bg(out, BgInverse, cb) }
+func (c dummyS) Dim(out io.Writer, cb func(out io.Writer))       { c.bg(out, BgDim, cb) }
+func (c dummyS) Blink(out io.Writer, cb func(out io.Writer))     { c.bg(out, BgBlink, cb) }
+func (c dummyS) Bg(out io.Writer, bgColor Color, cb func(out io.Writer)) {
+	c.bg(out, bgColor, cb)
+}
+func (c dummyS) bg(out io.Writer, bg Color, cb func(out io.Writer)) {
+	cb(out)
+	return
+}
+
+var _ Translator = (*dummyS)(nil)       // ensure cpTranslator implements Translator
+var _ Translator = (*cpTranslator)(nil) // ensure cpTranslator implements Translator
 
 type cpTranslator struct {
 	noColorMode bool // strip color code simply
@@ -215,12 +264,21 @@ func (c *cpTranslator) StripLeftTabsAndColorize(s string) string {
 	return c.stripLeftTabs(s)
 }
 
+func (c *cpTranslator) StripLeftTabs(s string) string {
+	r := c.stripLeftTabsOnly(s)
+	return c.Translate(r, 0)
+}
+
 func (c *cpTranslator) stripLeftTabs(s string) string {
 	r := c.stripLeftTabsOnly(s)
 	return c.Translate(r, 0)
 }
 
-func (c *cpTranslator) stripLeftTabsOnly(s string) string { //nolint:revive
+func (c *cpTranslator) StripLeftTabsOnly(s string) string {
+	return c.stripLeftTabsOnly(s)
+}
+
+func (c *cpTranslator) stripLeftTabsOnly(s string) string {
 	var lines []string
 	tabs := 1000
 	var emptyLines []int
@@ -407,6 +465,27 @@ func (c *cpTranslator) DimFast(out io.Writer, text string) {
 // HighlightFast outputs formatted message to stdout with colored ansi codes.
 func (c *cpTranslator) HighlightFast(out io.Writer, text string) {
 	WrapHighlightTo(out, text)
+}
+
+func (c *cpTranslator) Bold(out io.Writer, cb func(out io.Writer))      { c.bg(out, BgBoldOrBright, cb) }
+func (c *cpTranslator) Italic(out io.Writer, cb func(out io.Writer))    { c.bg(out, BgItalic, cb) }
+func (c *cpTranslator) Underline(out io.Writer, cb func(out io.Writer)) { c.bg(out, BgUnderline, cb) }
+func (c *cpTranslator) Inverse(out io.Writer, cb func(out io.Writer))   { c.bg(out, BgInverse, cb) }
+func (c *cpTranslator) Dim(out io.Writer, cb func(out io.Writer))       { c.bg(out, BgDim, cb) }
+func (c *cpTranslator) Blink(out io.Writer, cb func(out io.Writer))     { c.bg(out, BgBlink, cb) }
+func (c *cpTranslator) Bg(out io.Writer, bgColor Color, cb func(out io.Writer)) {
+	c.bg(out, bgColor, cb)
+}
+
+func (c *cpTranslator) bg(out io.Writer, bg Color, cb func(out io.Writer)) {
+	if states.Env().IsNoColorMode() {
+		cb(out)
+		return
+	}
+
+	echoBg(out, bg)
+	cb(out)
+	echoResetColor(out)
 }
 
 func (c *cpTranslator) WriteBgColor(out io.Writer, clr Color) { echoBg(out, clr) }
