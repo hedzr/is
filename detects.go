@@ -243,6 +243,12 @@ func GetTraceLevel() int     { return Env().GetTraceLevel() } // return the trac
 func SetTraceMode(b bool)    { Env().SetTraceMode(b) }        // sets trace state
 func SetTraceLevel(hits int) { Env().SetTraceLevel(hits) }    // sets trace level
 
+func SetOnDebugChanged(funcs ...states.OnChanged)   { Env().SetOnDebugChanged(funcs...) }   // sets ondebugchanged callbacks
+func SetOnTraceChanged(funcs ...states.OnChanged)   { Env().SetOnTraceChanged(funcs...) }   // sets ontracechanged callbacks
+func SetOnVerboseChanged(funcs ...states.OnChanged) { Env().SetOnVerboseChanged(funcs...) } // sets onverbosechanged callbacks
+func SetOnQuietChanged(funcs ...states.OnChanged)   { Env().SetOnQuietChanged(funcs...) }   // sets onquietchanged callbacks
+func SetOnNoColorChanged(funcs ...states.OnChanged) { Env().SetOnNoColorChanged(funcs...) } // sets onnocolorchanged callbacks
+
 // States or Env returns a minimal environment settings for a typical CLI app.
 //
 // See also [states.CmdrMinimal].
