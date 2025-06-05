@@ -1,5 +1,8 @@
 # CHANGELOG & HISTORY
 
+- v0.7.21
+  - security patch
+
 - v0.7.20
   - fix `normalizeDirBasic` - for rel-parent-dir (`../`)
 
