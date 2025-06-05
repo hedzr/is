@@ -294,7 +294,8 @@ func normalizeDirBasic(s string) string {
 		return path.Join(GetCurrentDir(), s1)
 	}
 	if strings.HasPrefix(s1, "../") {
-		return path.Dir(path.Join(GetCurrentDir(), s1))
+		// Or: path.Join(path.Dir(GetCurrentDir()), s1[3:])
+		return path.Join(GetCurrentDir(), s1)
 	}
 	if strings.HasPrefix(s1, "~/") {
 		return path.Join(os.Getenv("HOME"), s1[2:])
