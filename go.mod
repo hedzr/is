@@ -7,7 +7,7 @@ toolchain go1.23.3
 //replace github.com/hedzr/env => ../libs.env
 
 require (
-	golang.org/x/net v0.40.0
+	golang.org/x/net v0.41.0
 	golang.org/x/term v0.32.0
 )
 
