@@ -607,6 +607,9 @@ func Name(file string) string { return path.Dir(file) } // return DirName part
 // RelName returns relative pathname from root
 func RelName(file, root string) string {
 	if str, yes := strings.CutPrefix(file, root); yes {
+		if len(str) == 0 {
+			return "."
+		}
 		if str[0] == '/' {
 			return str[1:]
 		}
@@ -618,6 +621,9 @@ func RelName(file, root string) string {
 // RelNameForce returns the relative pathname even if 'file' and 'root' is not on a same volume.
 func RelNameForce(file, root string) string {
 	if str, yes := strings.CutPrefix(file, root); yes {
+		if len(str) == 0 {
+			return "."
+		}
 		if str[0] == '/' {
 			return str[1:]
 		}
