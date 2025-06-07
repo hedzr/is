@@ -110,6 +110,23 @@ func (c *calling) WithEnv(key, value string) *calling {
 	return c
 }
 
+func (c *calling) WithEnvMap(m map[string]string) *calling {
+	for key, value := range m {
+		if key != "" {
+			chk := key + "="
+			for i, kv := range c.env {
+				if strings.HasPrefix(kv, chk) {
+					c.env[i] = chk + value
+					return c
+				}
+			}
+
+			c.env = append(c.env, chk+value)
+		}
+	}
+	return c
+}
+
 func (c *calling) WithWorkDir(dir string) *calling {
 	c.Cmd.Dir = dir
 	return c
