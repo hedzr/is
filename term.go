@@ -83,3 +83,27 @@ func TerminalFd(fd uintptr) bool {
 //
 //	is.Color().GetColorTranslator().Translate("<b>bold</b>")
 func Color() color.Index { return color.Index{} }
+
+func StdoutStat() (normalFile, redirected, piped, terminal bool) {
+	return term.StatStdout()
+}
+
+func StdoutPiped() bool {
+	_, _, b, _ := term.StatStdout()
+	return b
+}
+
+func StdoutRedirected() bool {
+	_, b, _, _ := term.StatStdout()
+	return b
+}
+
+func StdoutIsTerminal() bool {
+	_, _, _, b := term.StatStdout()
+	return b
+}
+
+func StdoutIsNormalFile() bool {
+	b, _, _, _ := term.StatStdout()
+	return b
+}

@@ -152,4 +152,53 @@ func anyInEnv(names ...string) (name, v string, yes bool) {
 	return
 }
 
+func statStdout(w *os.File) (normalFile, redirected, piped, term bool) {
+	o, _ := w.Stat()
+	mode := o.Mode()
+	if (mode & os.ModeCharDevice) == os.ModeCharDevice { //Terminal
+		term = true
+	} else if (mode & os.ModeNamedPipe) == os.ModeNamedPipe {
+		redirected, piped = true, true
+	} else if (mode & (os.ModeDevice | os.ModeIrregular)) == 0 {
+		redirected, normalFile = true, true
+	} else {
+		redirected = true
+	}
+	return
+}
+
+func StatStdout() (normalFile, redirected, piped, term bool) {
+	return statStdout(os.Stdout)
+}
+
+func StatStdoutString() (status string) {
+	n, r, p, t := statStdout(os.Stdout)
+	var sb strings.Builder
+	if n {
+		sb.WriteString("normal-file")
+	}
+	if p {
+		if sb.Len() > 0 {
+			sb.WriteRune(',')
+		}
+		sb.WriteString("piped")
+	}
+	if r {
+		if sb.Len() > 0 {
+			sb.WriteRune(',')
+		}
+		sb.WriteString("redirected")
+	}
+	if t {
+		if sb.Len() > 0 {
+			sb.WriteRune(',')
+		}
+		sb.WriteString("terminal")
+	}
+	return sb.String()
+}
+
+func StdoutIsPiped() (b bool) {
+	_, _, b, _ = StatStdout()
+	return
 }
