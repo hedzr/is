@@ -18,6 +18,11 @@ func Tty(w io.Writer) bool { return term.IsTty(w) }
 // A colorful tty device can receive ANSI escaped sequences and draw its.
 func ColoredTty(w io.Writer) bool { return term.IsColored(w) }
 
+// ColorfulTty detects a writer if it is a colorful tty device.
+//
+// A colorful tty device can receive ANSI escaped sequences and draw its.
+func ColorfulTty(w io.Writer) bool { return term.IsColorful(w) }
+
 // TtyEscaped detects a string if it contains ansi color escaped sequences
 // Deprecated v0.5.3, use HasAnsiEscaped
 func TtyEscaped(s string) bool { return term.IsAnsiEscaped(s) }
