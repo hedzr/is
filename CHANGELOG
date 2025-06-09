@@ -1,5 +1,10 @@
 # CHANGELOG & HISTORY
 
+- v0.7.23
+  - add `StdoutStat`, `StdoutPiped` & `StdoutRedirected`, ...
+  - add `WithWriter` to `exec.New()...`
+  - improved `is.ColorfulTty`
+
 - v0.7.22
   - fix `RelName()` for a same two input should return "."
   - add `WithEnvMap` to `exec.New()...`
