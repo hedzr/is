@@ -95,6 +95,24 @@ func (c *calling) WithCommand(cmd ...interface{}) *calling {
 	return c
 }
 
+func (c *calling) WithWriter(stdout, stderr io.Writer) *calling {
+	if c.Cmd == nil {
+		println("WARN, WithWriter() must follow WithCommand.\nFor example: exec.New().WithCommand(...).WithWriter(...)")
+		return c
+	}
+	if stdout == nil {
+		c.Cmd.Stdout = io.Discard
+	} else {
+		c.Cmd.Stdout = stdout
+	}
+	if stderr == nil {
+		c.Cmd.Stderr = io.Discard
+	} else {
+		c.Cmd.Stderr = stderr
+	}
+	return c
+}
+
 func (c *calling) WithEnv(key, value string) *calling {
 	if key != "" {
 		chk := key + "="
