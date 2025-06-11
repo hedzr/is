@@ -34,7 +34,19 @@ import (
 // GetTtySize returns the window size in columns and rows in the active console window.
 // The return value of this function is in the order of cols, rows.
 func GetTtySize() (cols, rows int) {
-	cols, rows, _ = getTtySize("/dev/tty")
+	cols, rows, _ = getFdSize(os.Stdout.Fd())
+	// if cols == 0 && rows == 0 {
+	// 	cols, rows, _ = getFdSize(uintptr(syscall.Stdout))
+	// 	if cols == 0 && rows == 0 {
+	// 		// st, _ := GetState(os.Stdout.Fd())
+	// 		ws, err := unix.IoctlGetWinsize(int(os.Stdout.Fd()), unix.TIOCGWINSZ)
+	// 		if err != nil {
+	// 			return 0, 0
+	// 		}
+	// 		return int(ws.Col), int(ws.Row)
+	// 	}
+	// }
+	// // cols, rows, _ = getTtySize("/dev/tty")
 	return
 }
 
