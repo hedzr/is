@@ -1,6 +1,9 @@
 package states
 
 import (
+	"reflect"
+	"runtime"
+
 	"github.com/hedzr/is/states/buildtags"
 	"github.com/hedzr/is/states/isdelve"
 	"github.com/hedzr/is/states/trace"
@@ -40,6 +43,12 @@ type CmdrMinimal interface {
 	SetOnNoColorChanged(funcs ...OnChanged)
 	SetOnVerboseChanged(funcs ...OnChanged)
 	SetOnQuietChanged(funcs ...OnChanged)
+
+	RemovcOnDebugChanged(funcs ...OnChanged)
+	RemoveOnTraceChanged(funcs ...OnChanged)
+	RemoveOnNoColorChanged(funcs ...OnChanged)
+	RemoveOnVerboseChanged(funcs ...OnChanged)
+	RemoveOnQuietChanged(funcs ...OnChanged)
 }
 
 func Env() CmdrMinimal                  { return env }    // return minimal app env
@@ -126,6 +135,47 @@ func (e *minimalEnv) SetOnVerboseChanged(funcs ...OnChanged) {
 
 func (e *minimalEnv) SetOnQuietChanged(funcs ...OnChanged) {
 	e.quietChanged = append(e.quietChanged, funcs...)
+}
+
+func (e *minimalEnv) RemovcOnDebugChanged(funcs ...OnChanged) {
+	e.debugChanged = e.removeHelper(e.debugChanged, funcs...)
+}
+
+func (e *minimalEnv) RemoveOnTraceChanged(funcs ...OnChanged) {
+	e.traceChanged = e.removeHelper(e.traceChanged, funcs...)
+}
+
+func (e *minimalEnv) RemoveOnNoColorChanged(funcs ...OnChanged) {
+	e.noColorChanged = e.removeHelper(e.noColorChanged, funcs...)
+}
+
+func (e *minimalEnv) RemoveOnVerboseChanged(funcs ...OnChanged) {
+	e.verboseChanged = e.removeHelper(e.verboseChanged, funcs...)
+}
+
+func (e *minimalEnv) RemoveOnQuietChanged(funcs ...OnChanged) {
+	e.quietChanged = e.removeHelper(e.quietChanged, funcs...)
+}
+
+func (e *minimalEnv) removeHelper(slice []OnChanged, removingItems ...OnChanged) (result []OnChanged) {
+	result = slice
+	for _, h := range removingItems {
+		if h != nil {
+			hn := fnUniName(h)
+			for i, cb := range slice {
+				if fnUniName(cb) == hn {
+					// result = slices.Delete(e.noColorChanged, i, 1)
+					result = append(slice[0:i], slice[i+1:]...)
+					break
+				}
+			}
+		}
+	}
+	return
+}
+
+func fnUniName(f OnChanged) string {
+	return runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 }
 
 // InDebugging check if the delve debugger presents.
