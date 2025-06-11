@@ -1,5 +1,26 @@
 # CHANGELOG & HISTORY
 
+- v0.8.25
+  - improved `term/color` subpackage
+    - support 16-colors and 256/16m-colors
+    - support csi codes - `colors.New().CSI()`
+    - support control code (wip)
+    - `Cursor` - for building colorful text and sending cursor operations
+      - added new `func New() *Cursor` for streaming calls to build colorful text
+      - full ansi escape sequences support
+      - main console cursor operations support
+    - `RowsBlock` - for printing in a psuedo tui environ
+      RowsBlock makes a full-rows display area for several rows,
+      you could print to these rows by moving cursor to up, down, or top.
+  - improved for more platforms - building tested for these ARCHes matrix
+    - darwin, linux, windows, bsd,
+    - amd64, arm64, riscv64, mips64,
+    - added `isDebuggerAttached` for bsd
+  - added `RemovcOnDebugChanged()` and more
+  - updated and added more _examples
+  - added top-level packge doc (is.go)
+  - improved `GetTtySize`
+
 - v0.7.23
   - add `StdoutStat`, `StdoutPiped` & `StdoutRedirected`, ...
   - add `WithWriter` to `exec.New()...`
