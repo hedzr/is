@@ -3,12 +3,18 @@ package color_test
 import (
 	"fmt"
 
+	"github.com/hedzr/is/states"
 	"github.com/hedzr/is/term/color"
 )
 
 func ExampleNew() {
 	// start a color text builder
 	var c = color.New()
+
+	// specially for running on remote ci server
+	if states.Env().IsNoColorMode() {
+		states.Env().SetNoColorMode(true)
+	}
 
 	// paint and get the result (with ansi-color-seq ready)
 	var result = c.Println().
