@@ -129,6 +129,15 @@ const (
 	// marked as if for deletion.
 	BgStrikeout Color = 9
 
+	BgResetBoldOrDoubleUnderLine Color = 21
+	BgResetNormalColorAndBright  Color = 22 // = BgResetDim
+	BgResetItalic                Color = 23
+	BgResetUnderline             Color = 24
+	BgResetBlink                 Color = 25
+	BgResetInverse               Color = 27
+	BgResetHidden                Color = 28
+	BgResetStrikeout             Color = 29
+
 	FgDarkColor = FgLightGray
 
 	FgDefault Color = 39

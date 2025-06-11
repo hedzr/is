@@ -351,7 +351,7 @@ func StripHTMLTags(s string) string { return cptNC.stripHTMLTags(s) }
 
 // Aggressively strips HTML tags from a string.
 // It will only keep anything between `>` and `<`.
-func (c *cpTranslator) stripHTMLTags(s string) string { //nolint:revive
+func (c *cpTranslator) stripHTMLTags(s string) string {
 	// Setup a string builder and allocate enough memory for the new string.
 	var builder strings.Builder
 	builder.Grow(len(s) + utf8.UTFMax)
