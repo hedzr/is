@@ -40,7 +40,9 @@ func ExampleNew() {
 
 		// and render the result
 	fmt.Println(result)
-	// Output:
+
+	// For most of ttys, the output looks like:
+	//
 	// [31mhello, world.[0m
 	// [sx
 	// [32mhello, world.
