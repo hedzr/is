@@ -144,7 +144,7 @@ func (s *Cursor) ResetColor() *Cursor {
 	return s
 }
 
-// Translate translates color tags from input string.
+// Translate translates color tags from input string and make it colorful.
 //
 // The tags include:
 //
