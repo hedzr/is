@@ -1,5 +1,8 @@
 # CHANGELOG & HISTORY
 
+- v0.8.26
+  - `is/term` - added `MakeRawWrapped`, `MakeNewTerm`
+
 - v0.8.25
   - improved `term/color` subpackage
     - support 16-colors and 256/16m-colors
