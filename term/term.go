@@ -17,6 +17,15 @@
 package term
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+	"sync"
+	"syscall"
+
+	"github.com/hedzr/is/basics"
 	"golang.org/x/term"
 )
 
@@ -42,6 +51,81 @@ func IsTerminal(fd int) bool {
 // restored.
 func MakeRaw(fd int) (*term.State, error) {
 	return term.MakeRaw(fd)
+}
+
+func MakeRawWrapped() (deferFunc func(), err error) {
+	if !term.IsTerminal(0) || !term.IsTerminal(1) {
+		return func() {}, fmt.Errorf("stdin/stdout should be terminal")
+	}
+
+	var oldState *term.State
+	oldState, err = term.MakeRaw(0)
+	if err != nil {
+		if !errors.Is(err, syscall.ENOTTY) {
+			return func() {}, err
+		}
+	}
+	deferFunc = func() {
+		if e := recover(); e != nil {
+			if err == nil {
+				if e1, ok := e.(error); ok {
+					err = e1
+				} else {
+					err = fmt.Errorf("%v", e)
+				}
+			} else {
+				err = fmt.Errorf("%v | %v", e, err)
+			}
+		}
+
+		if e1 := term.Restore(0, oldState); e1 != nil {
+			if err == nil {
+				err = e1
+			} else {
+				err = fmt.Errorf("%v | %v", e1, err)
+			}
+		}
+	}
+	return
+}
+
+type SmallTerm interface {
+	io.Writer
+	ReadLine() (string, error)
+}
+
+type LooperFunc func(ctx context.Context, tty SmallTerm, replyPrefix string, exitChan <-chan struct{}, closer func()) (err error)
+
+func MakeNewTerm(ctx context.Context, welcomeString, promptString, replyPrefix string, looper LooperFunc) (deferFunc func(), err error) {
+	screen := struct {
+		io.Reader
+		io.Writer
+	}{os.Stdin, os.Stdout}
+	term := term.NewTerminal(screen, promptString)
+	term.SetPrompt(string(term.Escape.Red) + promptString + string(term.Escape.Reset))
+
+	rePrefix := string(term.Escape.Cyan) + replyPrefix + string(term.Escape.Reset)
+
+	exitChan := make(chan struct{}, 3)
+	deferFunc = func() { close(exitChan) }
+
+	catcher := basics.Catch()
+	catcher.
+		WithVerboseFn(func(msg string, args ...any) {
+			// logz.WithSkip(2).PrintlnContext(ctx, fmt.Sprintf("[verbose] %s\n", fmt.Sprintf(msg, args...)))
+		}).
+		WithOnSignalCaught(func(sig os.Signal, wg *sync.WaitGroup) {
+			println()
+			// logz.Debug("signal caught", "sig", sig)
+			exitChan <- struct{}{}
+		}).
+		WaitFor(func(closer func()) {
+			if welcomeString != "" {
+				_, _ = fmt.Fprintln(term, welcomeString)
+			}
+			err = looper(ctx, term, rePrefix, exitChan, closer)
+		})
+	return
 }
 
 // GetState returns the current state of a terminal which may be useful to
