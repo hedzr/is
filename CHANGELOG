@@ -1,5 +1,13 @@
 # CHANGELOG & HISTORY
 
+- v0.8.27
+  - add `colors.go` to `is/term/color`
+    - change `color.Color` from `int` to `interface{...}`
+    - add `NewColor16`, `NewColor256`, `NewColor16m` to build a `color.Color` object.
+    - added `fmtbufS` to make memory usage more effective
+  - fix `is/term/color`
+    - fix `color.New().....Build()` can't auto-close ansi-esc-code as well
+
 - v0.8.26
   - `is/term` - added `MakeRawWrapped`, `MakeNewTerm`
 
