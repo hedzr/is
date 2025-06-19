@@ -57,6 +57,34 @@ func ExampleNew() {
 	// [8BDONE
 }
 
+func ExampleNewColor16() {
+	var clr = color.NewColor16(color.FgCyan)
+	var str = clr.Color()
+	fmt.Println(str, "hello")
+	// Output:
+	// [36m hello
+}
+
+func ExampleNewColor256() {
+	var clr = color.NewColor256(byte(137), false)
+	fmt.Println(clr.Color(), "hello")
+	clr = color.NewColor256(byte(137), true)
+	fmt.Println(clr.Color(), "hello")
+	// Output:
+	// [38;5;137m hello
+	// [48;5;137m hello
+}
+
+func ExampleNewColor16m() {
+	var clr = color.NewColor16m(173, 137, 73, false)
+	fmt.Println(clr.Color(), "hello")
+	clr = color.NewColor16m(173, 137, 73, true)
+	fmt.Println(clr.Color(), "hello")
+	// Output:
+	// [38;2;173;137;73m hello
+	// [48;2;173;137;73m hello
+}
+
 func ExampleCursor_Color16() {
 	// another colorful builfer
 	var c = color.New()

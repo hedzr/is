@@ -6,6 +6,31 @@ import (
 	"github.com/hedzr/is/term"
 )
 
+func TestColor16AndMore(t *testing.T) {
+	t.Run("s1", func(t *testing.T) {
+		var c = New()
+		var str = c.Color16(FgRed).
+			Printf("hello, %s.", "world").Println().Build()
+		const Output = "[31mhello, world.[0m\n"
+		if str != Output {
+			t.Fatalf("bad, expect %q but got %q", Output, str)
+		} else {
+			t.Logf("GOOD, got: %q", str)
+		}
+	})
+	t.Run("s2", func(t *testing.T) {
+		// another colorful builfer
+		var c = New()
+		var str = c.Color(FgRed, "hello, %s.", "world").Build()
+		const Output = "[31mhello, world.[0m"
+		if str != Output {
+			t.Fatalf("bad, expect %q but got %q", Output, str)
+		} else {
+			t.Logf("GOOD, got: %q", str)
+		}
+	})
+}
+
 func TestIsAnsiEscaped(t *testing.T) {
 	for i, tc := range []struct {
 		src    string

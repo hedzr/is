@@ -53,8 +53,8 @@ func NewColor256(clr byte, isBg bool) Color256 {
 // [BgBlack], ...), and effects (such as bold/hilight -
 // [BgBoldOrBright], italic - [BgItalic], dim -
 // [BgDim], ...)
-func NewColor16(clr Color16, isBg bool) Color16 {
-	_ = isBg //ignore it
+func NewColor16(clr Color16) Color16 {
+	// _ = isBg //ignore it
 	return Color16(clr)
 }
 
