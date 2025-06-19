@@ -98,6 +98,7 @@ func ExampleCursor_Color256() {
 	// [38;5;163m[163] hello, world.
 	// [38;5;164m[164] hello, world.
 	// [38;5;165m[165] hello, world.
+	// [0m
 }
 
 func ExampleCursor_RGB() {
@@ -110,6 +111,7 @@ func ExampleCursor_RGB() {
 	// Output:
 	// [38;2;211;211;33m[16m] hello, world.
 	// [48;2;211;211;33m[16m] hello, world.
+	// [0m
 }
 
 func ExampleCursor_EDim() {
