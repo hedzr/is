@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"sync"
 	"sync/atomic"
 
@@ -234,7 +233,7 @@ func (s *Cursor) fg(clr Color, format string, args ...any) {
 	} else {
 		_, _ = s.sb.WriteString(format)
 	}
-	atomic.CompareAndSwapInt32(&s.needReset, 0, 1)
+	// atomic.CompareAndSwapInt32(&s.needReset, 0, 1)
 	// if close {
 	// 	// defer s.echoResetColor()
 	// 	atomic.CompareAndSwapInt32(&s.needReset, 0, 1)
@@ -250,7 +249,7 @@ func (s *Cursor) bg(clr Color, format string, args ...any) {
 	} else {
 		_, _ = s.sb.WriteString(format)
 	}
-	atomic.CompareAndSwapInt32(&s.needReset, 0, 1)
+	// atomic.CompareAndSwapInt32(&s.needReset, 0, 1)
 	// if close {
 	// 	// defer s.echoResetColor()
 	// 	atomic.CompareAndSwapInt32(&s.needReset, 0, 1)
@@ -262,35 +261,39 @@ func (s *Cursor) bg(clr Color, format string, args ...any) {
 func (s *Cursor) echoColor(clr Color) {
 	// _, _ = fmt.Fprintf(os.Stdout, "\x1b[%dm", c)
 	if clr != NoColor {
-		_, _ = s.sb.WriteString(csi)
-		_, _ = s.sb.Write([]byte(strconv.Itoa(int(clr))))
-		_, _ = s.sb.WriteRune('m')
+		_, _ = s.sb.WriteString(clr.Color())
+		// _, _ = s.sb.WriteString(csi)
+		// _, _ = s.sb.Write([]byte(strconv.Itoa(int(clr))))
+		// _, _ = s.sb.WriteRune('m')
 	}
 }
 
 func (s *Cursor) echoColorAndBg(clr, bg Color) {
 	// _, _ = fmt.Fprintf(os.Stdout, "\x1b[%dm", c)
 	if clr != NoColor {
-		_, _ = s.sb.WriteString(csi)
-		_, _ = s.sb.Write([]byte(strconv.Itoa(int(clr))))
-		_, _ = s.sb.WriteRune('m')
+		_, _ = s.sb.WriteString(clr.Color())
+		// _, _ = s.sb.WriteString(csi)
+		// _, _ = s.sb.Write([]byte(strconv.Itoa(int(clr))))
+		// _, _ = s.sb.WriteRune('m')
 	}
 	s.echoBg(bg)
 }
 
 func (s *Cursor) echoBg(bg Color) {
 	if bg != NoColor {
-		_, _ = s.sb.WriteString(csi)
-		_, _ = s.sb.Write([]byte(strconv.Itoa(int(bg))))
-		_, _ = s.sb.WriteRune('m')
+		_, _ = s.sb.WriteString(bg.Color())
+		// _, _ = s.sb.WriteString(csi)
+		// _, _ = s.sb.Write([]byte(strconv.Itoa(int(bg))))
+		// _, _ = s.sb.WriteRune('m')
 	}
 }
 
 func (s *Cursor) echoResetColor() { //nolint:unused //no
 	// _, _ = fmt.Fprint(os.Stdout, "\x1b[0m")
-	_, _ = s.sb.WriteString(csi)
-	_, _ = s.sb.WriteRune('0')
-	_, _ = s.sb.WriteRune('m')
+	_, _ = s.sb.WriteString(ResetToNormalColor.Color())
+	// _, _ = s.sb.WriteString(csi)
+	// _, _ = s.sb.WriteRune('0')
+	// _, _ = s.sb.WriteRune('m')
 }
 
 type Writer interface {
@@ -306,9 +309,13 @@ const formfeed = '\x0c'       // CTRL-L FF, Move a printer to top of next page. 
 const carriagereturn = '\x0d' // CTRL-M CR, Moves the cursor to column zero.
 const escape = '\x1b'         // CTRL-[ ESC, Starts all the escape sequences
 const csi = "\x1b["
+const ESC = '\x1b'
+const CSI = '[' // \x9B
+const DCS = 'P' // \x90
+const OSC = ']' // \x9D
 
 const (
-	Reset Color = iota
+	Reset Color16 = iota
 	Bold
 	Faint
 	Italic
@@ -321,7 +328,7 @@ const (
 )
 
 const (
-	ResetBold Color = iota + 22
+	ResetBold Color16 = iota + 22
 	ResetItalic
 	ResetUnderline
 	ResetBlinking
