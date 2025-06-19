@@ -61,11 +61,13 @@ func (s c16MS) Print(args ...any) *Cursor {
 // RGB starts a child builder for true-colors foreground color.
 // The `r`, `g`, and `b` are a 0..255 number.
 func (s *Cursor) RGB(r, g, b int) c16MS {
+	atomic.CompareAndSwapInt32(&s.needReset, 0, 1)
 	return c16MS{r, g, b, false, 0, s}
 }
 
 // BgRGB starts a child builder for true-colors background color.
 // The `r`, `g`, and `b` are a 0..255 number.
 func (s *Cursor) BgRGB(r, g, b int) c16MS {
+	atomic.CompareAndSwapInt32(&s.needReset, 0, 1)
 	return c16MS{r, g, b, true, 0, s}
 }

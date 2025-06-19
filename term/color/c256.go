@@ -57,11 +57,13 @@ func (s c256S) Print(args ...any) *Cursor {
 // Color256 starts a child builder for 256-colors foreground color.
 // The `n` is in 0..255.
 func (s *Cursor) Color256(n byte) c256S {
+	atomic.CompareAndSwapInt32(&s.needReset, 0, 1)
 	return c256S{n, false, 0, s}
 }
 
 // Bg256 starts a child builder for 256-colors background color.
 // The `n` is in 0..255.
 func (s *Cursor) Bg256(n byte) c256S {
+	atomic.CompareAndSwapInt32(&s.needReset, 0, 1)
 	return c256S{n, true, 0, s}
 }

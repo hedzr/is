@@ -179,7 +179,7 @@ func (c *cpTranslator) TranslateTo(s string, initialState Color) string {
 	return c.translateTo(node, s, initialState)
 }
 
-func (c *cpTranslator) translateTo(root *html.Node, source string, initialState Color) string { //nolint:revive,unparam
+func (c *cpTranslator) translateTo(root *html.Node, source string, initialState Color) string {
 	states, _ := []Color{initialState}, source //nolint:revive,gocritic
 	var sb strings.Builder
 
@@ -223,7 +223,8 @@ func (c *cpTranslator) translateTo(root *html.Node, source string, initialState 
 					}
 				}
 			case "kbd", "code":
-				colorize(node, 51, "51;1", level)
+				// printf "\033[%sm%s\033[0m\n" "51;1" "text here"
+				colorize(node, Reset, "51;1", level)
 				return
 			default:
 				// Logger.Debugf("%v, %v, lvl #%d\n", node.Type, node.Data, level)
@@ -266,12 +267,12 @@ func (c *cpTranslator) StripLeftTabsAndColorize(s string) string {
 
 func (c *cpTranslator) StripLeftTabs(s string) string {
 	r := c.stripLeftTabsOnly(s)
-	return c.Translate(r, 0)
+	return c.Translate(r, Reset)
 }
 
 func (c *cpTranslator) stripLeftTabs(s string) string {
 	r := c.stripLeftTabsOnly(s)
-	return c.Translate(r, 0)
+	return c.Translate(r, Reset)
 }
 
 func (c *cpTranslator) StripLeftTabsOnly(s string) string {
@@ -495,6 +496,10 @@ func (c *cpTranslator) color(out io.Writer, clr Color)        { echoColor(out, c
 func (c *cpTranslator) resetColor(out io.Writer)              { echoResetColor(out) } //nolint:unused
 
 func echoColor(out io.Writer, clr Color) {
+	_, _ = out.Write([]byte(clr.Color()))
+}
+
+func echoColor16(out io.Writer, clr Color16) {
 	// _, _ = fmt.Fprintf(os.Stdout, "\x1b[%dm", c)
 	_, _ = out.Write([]byte("\x1b["))
 	_, _ = out.Write([]byte(strconv.Itoa(int(clr))))
@@ -502,6 +507,14 @@ func echoColor(out io.Writer, clr Color) {
 }
 
 func echoColorAndBg(out io.Writer, clr, bg Color) {
+	// _, _ = fmt.Fprintf(os.Stdout, "\x1b[%dm", c)
+	if clr != NoColor {
+		echoColor(out, clr)
+	}
+	echoBg(out, bg)
+}
+
+func echoColorAndBg16(out io.Writer, clr, bg Color16) {
 	// _, _ = fmt.Fprintf(os.Stdout, "\x1b[%dm", c)
 	if clr != NoColor {
 		_, _ = out.Write([]byte("\x1b["))
@@ -512,6 +525,10 @@ func echoColorAndBg(out io.Writer, clr, bg Color) {
 }
 
 func echoBg(out io.Writer, bg Color) {
+	_, _ = out.Write([]byte(bg.Color()))
+}
+
+func echoBg16(out io.Writer, bg Color16) {
 	if bg != NoColor {
 		_, _ = out.Write([]byte("\x1b["))
 		_, _ = out.Write([]byte(strconv.Itoa(int(bg))))
@@ -568,7 +585,7 @@ func (c *cpTranslator) toColorInt(s string) Color { //nolint:revive
 	if i, ok := cptCM[strings.ToLower(s)]; ok {
 		return i
 	}
-	return Color(0)
+	return Reset
 }
 
 const (
