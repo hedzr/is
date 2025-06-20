@@ -312,19 +312,6 @@ func ExampleNewSGR() {
 
 	fmt.Println(color.SGRreset)
 
-	// SGRsetFg
-	fmt.Printf("\x1b[%d;5;9m[ 9 TEST string HERE]%s\n",
-		color.SGRsetFg,
-		color.SGRdefaultFg,
-	)
-
-	fmt.Printf("\x1b[%d;5;21m[21 TEST string HERE]%s\n",
-		color.SGRsetFg,
-		color.SGRdefaultFg,
-	)
-
-	fmt.Println(color.SGRreset)
-
 	// Output:
 	//     0. [1mHello, World![22m bold
 	//     1. [2mHello, World![22m dim
@@ -346,15 +333,30 @@ func ExampleNewSGR() {
 	//    17. [73mHello, World![75m superscript
 	//    18. [74mHello, World![75m subscript
 	// [0m
-	// [38;5;9m[ 9 TEST string HERE][39m
-	// [38;5;21m[21 TEST string HERE][39m
-	// [0m
 }
+
 func TestExampleNewSGR(t *testing.T) {
 	if !testing.Verbose() {
 		return
 	}
 	ExampleNewSGR()
+
+	// SGRsetFg
+	fmt.Printf("\x1b[%d;5;9m[ 9 TEST string HERE]%s\n",
+		color.SGRsetFg,
+		color.SGRdefaultFg,
+	)
+
+	fmt.Printf("\x1b[%d;5;21m[21 TEST string HERE]%s\n",
+		color.SGRsetFg,
+		color.SGRdefaultFg,
+	)
+
+	fmt.Println(color.SGRreset)
+
+	// [38;5;9m[ 9 TEST string HERE][39m
+	// [38;5;21m[21 TEST string HERE][39m
+	// [0m
 }
 
 func TestColor256table(t *testing.T) {
