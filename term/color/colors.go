@@ -70,6 +70,23 @@ func NewColor16(clr Color16) Color16 {
 	return Color16(clr)
 }
 
+// NewStyle creates a container of [Color] objects.
+// All of these children will be bound and printed
+// in a one sequences.
+func NewStyle() Style {
+	return Style{}
+}
+
+// NewControlCode return the given [ControlCode] code directly.
+func NewControlCode(code ControlCode) ControlCode {
+	return code
+}
+
+// NewFeCode return the given [FeCode] code directly.
+func NewFeCode(code FeCode) FeCode {
+	return code
+}
+
 type Color16 int // ANSI Escaped Sequences here
 
 func (c Color16) Color() string {
@@ -154,10 +171,109 @@ func (c Color16m) Int() (color int) {
 	return
 }
 
-type Color256 struct {
-	// r, g, b, a byte
-	clr [4]byte
-	bg  bool
+// Style is an array of [Color] objects
+type Style struct {
+	Items []Color
+}
+
+func (c *Style) Add(colors ...Color) *Style {
+	c.Items = append(c.Items, colors...)
+	return c
+}
+
+func (c Style) String() string { return c.Color() }
+
+func (c Style) Color() string {
+	var sb = NewFmtBuf()
+	for _, it := range c.Items {
+		it.ColorTo(sb)
+	}
+	return sb.PutBack()
+}
+
+func (c Style) ColorTo(out io.Writer) {
+	for _, it := range c.Items {
+		it.ColorTo(out)
+	}
+}
+
+func (c Style) Int() (color int) {
+	for _, it := range c.Items {
+		color = it.Int()
+	}
+	return
+}
+
+type ControlCode byte
+
+func (c ControlCode) String() string { return c.Color() }
+
+func (c ControlCode) Color() string {
+	return string(byte(c))
+}
+
+func (c ControlCode) ColorTo(out io.Writer) {
+	wrString(out, c.Color())
+}
+
+func (c ControlCode) Int() (color int) {
+	color = int(byte(c))
+	return
+}
+
+// See also these rune(s)
+//
+// const bell = '\x07'           // CTRL-G BEL, Makes an audible noise.
+// const backspace = '\x08'      // CTRL-H BS, Moves the cursor left (but may "backwards wrap" if cursor is at start of line).
+// const tabstop = '\x09'        // CTRL-I HT, Moves the cursor right to next tab stop.
+// const linefeed = '\x0a'       // CTRL-J LF, Moves to next line, scrolls the display up if at bottom of the screen. Usually does not move horizontally, though programs should not rely on this.
+// const formfeed = '\x0c'       // CTRL-L FF, Move a printer to top of next page. Usually does not move horizontally, though programs should not rely on this. Effect on video terminals varies.
+// const carriagereturn = '\x0d' // CTRL-M CR, Moves the cursor to column zero.
+// const escape = '\x1b'         // CTRL-[ ESC, Starts all the escape sequences
+const (
+	BEL ControlCode = bell           // CTRL-G BEL, Makes an audible noise.
+	BS  ControlCode = backspace      // CTRL-H BS, Moves the cursor left (but may "backwards wrap" if cursor is at start of line).
+	HT  ControlCode = tabstop        // CTRL-I HT, Moves the cursor right to next tab stop.
+	LF  ControlCode = linefeed       // CTRL-J LF, Moves to next line, scrolls the display up if at bottom of the screen. Usually does not move horizontally, though programs should not rely on this.
+	FF  ControlCode = formfeed       // CTRL-L FF, Move a printer to top of next page. Usually does not move horizontally, though programs should not rely on this. Effect on video terminals varies.
+	CR  ControlCode = carriagereturn // CTRL-M CR, Moves the cursor to column zero.
+	ESC ControlCode = escape         // CTRL-[ ESC, Starts all the escape sequences
+)
+
+// FeCode will be expanded as ESC + byte sequence.
+// For example, CSI ('\x9B') will be expanded to '\x1B\x9B' (`ESC [`).
+type FeCode byte
+
+func (c FeCode) String() string { return c.Color() }
+
+func (c FeCode) Color() string {
+	var sb = NewFmtBuf()
+	_ = sb.WriteByte(ESCAPE)
+	_ = sb.WriteByte(byte(c))
+	return sb.PutBack()
+}
+
+func (c FeCode) ColorTo(out io.Writer) {
+	wrString(out, c.Color())
+}
+
+func (c FeCode) Int() (color int) {
+	color = int(byte(c))
+	return
+}
+
+const (
+	SS2 FeCode = '\x8E' // ESC N
+	SS3 FeCode = '\x8F' // ESC 0
+	DCS FeCode = '\x90' // ESC P
+	CSI FeCode = '\x9B' // ESC [
+	ST  FeCode = '\x9c' // ESC \
+	OSC FeCode = '\x9D' // ESC ]
+	SOS FeCode = '\x98' // ESC X
+	PM  FeCode = '\x9E' // ESC ^
+	APC FeCode = '\x9F' // ESC _
+)
+
 }
 
 func (c Color256) Color() string {
