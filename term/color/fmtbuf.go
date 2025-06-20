@@ -6,6 +6,22 @@ import (
 	"unicode/utf8"
 )
 
+var _ CWriter = (*fmtbufS)(nil)
+var _ FmtBuf = (*fmtbufS)(nil)
+
+type FmtBuf interface {
+	CWriter
+	PutBack() (str string)
+}
+
+type CWriter interface {
+	io.Writer
+	WriteString(str string) (n int, err error)
+	WriteInt(int) (n int, err error)
+	WriteRune(rune) (n int, err error)
+	WriteByte(byte) (err error)
+}
+
 var colorFormatBufPool = sync.Pool{
 	New: func() any {
 		return newColorFormatBufPool().reset()
