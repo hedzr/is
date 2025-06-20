@@ -87,6 +87,14 @@ func NewFeCode(code FeCode) FeCode {
 	return code
 }
 
+// NewSGR return the given [CSIsgr] code directly.
+//
+// A [CSIsgr] code is a `ESC n m` sequence to
+// represent bold, dim, fg color, bg colors, ...
+func NewSGR(code CSIsgr) CSIsgr {
+	return code
+}
+
 func CSIAddCode(code CSIsuffix) (c CSICodes) {
 	c.Items = append(c.Items, code.Code())
 	return
@@ -497,24 +505,138 @@ func (c CSIsuffix) Int() (color int) {
 	return
 }
 
+type CSIsgr byte
+
+func (c CSIsgr) Color() string {
+	var sb = NewFmtBuf()
+	_, _ = sb.WriteString(csi)
+	_, _ = sb.WriteInt(int(byte(c)))
+	_ = sb.WriteByte('m')
 	return sb.PutBack()
 }
 
-func (c Color256) ColorTo(out io.Writer) {
-	wrString(out, csi)
-	if c.bg {
-		wrString(out, "48;5;")
-	} else {
-		wrString(out, "38;5;")
-	}
-	wrInt(out, int(c.clr[0])) // n
-	wrRune(out, 'm')
+func (c CSIsgr) String() string { return c.Color() }
+
+func (c CSIsgr) ColorTo(out io.Writer) {
+	wrString(out, c.Color())
 }
 
-func (c Color256) Int() (color int) {
-	_, _ = binary.Decode(c.clr[0:4], binary.LittleEndian, &color)
+func (c CSIsgr) Int() (color int) {
+	color = int(byte(c))
 	return
 }
+
+const (
+	SGRreset     CSIsgr = iota // reset or normal
+	SGRbold                    // bold or increased intensity
+	SGRdim                     // faint, decreased intensity, or dim
+	SGRitalic                  // italic
+	SGRunderline               // underline
+	SGRslowblink
+	SGRrapidblink
+	SGRinverse // reverse video or invert
+	SGRhide    // conceal or hide
+	SGRstrike  // crossed-out or strike
+	SGRprimaryfont
+	SGRalternativefont1
+	SGRalternativefont2
+	SGRalternativefont3
+	SGRalternativefont4
+	SGRalternativefont5
+	SGRalternativefont6
+	SGRalternativefont7
+	SGRalternativefont8
+	SGRalternativefont9
+	SGRgothic          // Fraktur (Gothic), rarely supported
+	SGRdoublyUnderline // doubly underlined, or not bold
+	SGRresetBoldAndDim // neither bold nor faint
+	SGRresetItalic     //
+	SGRresetUnderline  // reset singly or doubly underlined
+	SGRresetSlowBlink  // turn blink off
+	SGRresetRapidBlink // proportional spacing
+	SGRresetInverse    //
+	SGRresetHide       // not concealed
+	SGRresetStrike     // not cross-out
+	SGRfgBlack         //
+	SGRfgRed
+	SGRfgGreen
+	SGRfgYellow
+	SGRfgBlue
+	SGRfgMagenta
+	SGRfgCyan
+	SGRfgLightGray
+	SGRsetFg     // use [NewColor256] or [NewColor16m]. 8-bit color; next arguments are `5;n` or `2;r;g;b`
+	SGRdefaultFg //
+	SGRbgBlack
+	SGRbgRed
+	SGRbgGreen
+	SGRbgYellow
+	SGRbgBlue
+	SGRbgMagenta
+	SGRbgCyan
+	SGRbgLightGray
+	SGRsetBg     // use [NewColor256] or [NewColor16m]. 8-bit color; next arguments are `5;n` or `2;r;g;b`.
+	SGRdefaultBg //
+	SGRdisableProportionalSpacing
+	SGRframed
+	SGRencircled
+	SGRoverlined // not supported in Terminal.app
+	SGRneitherFramedNorEncircled
+	SGRnotoverlined
+	SGRreserved56
+	SGRreserved57
+	SGRsetUnderlineColor // not om standard; implemented in Kitty, VTE, mintty, and iTerm2. Next arguments are `5;n` or `2;r;g;b`.
+	SGRdefaultUnderlineColor
+	SGRideogramUnderline // Ideogram underline or right side line
+	SGRideogramDoubleUnderline
+	SGRideogramOverline
+	SGRideogramDoubleOverline
+	SGRideogramStressMarking
+	SGRresetIdeogram
+	SGRreserved66
+	SGRreserved67
+	SGRreserved68
+	SGRreserved69
+	SGRreserved70
+	SGRreserved71
+	SGRreserved72
+	SGRsuperscript
+	SGRsubscript
+	SGRresetSuperscriptAndSubscript
+	SGRreserved76
+	SGRreserved77
+	SGRreserved78
+	SGRreserved79
+	SGRreserved80
+	SGRreserved81
+	SGRreserved82
+	SGRreserved83
+	SGRreserved84
+	SGRreserved85
+	SGRreserved86
+	SGRreserved87
+	SGRreserved88
+	SGRreserved89
+	SGRfgDarkGray // light black
+	SGRfgLightRed
+	SGRfgLightGreen
+	SGRfgLightYellow
+	SGRfgLightBlue
+	SGRfgLightMagenta
+	SGRfgLightCyan
+	SGRfgWhite // Light LightGray
+	SGRreserved98
+	SGRreserved99
+	SGRbgDarkGray // light black
+	SGRbgLightRed
+	SGRbgLightGreen
+	SGRbgLightYellow
+	SGRbgLightBlue
+	SGRbgLightMagenta
+	SGRbgLightCyan
+	SGRbgWhite // Light LightGray
+)
+
 
 const (
 	// https://en.wikipedia.org/wiki/ANSI_escape_code
