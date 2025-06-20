@@ -1,5 +1,17 @@
 # CHANGELOG & HISTORY
 
+- v0.8.28
+  - improved `is/term/color`
+    - fix/improved color256,color16,color16m
+    - added `NewSGR()`
+    - added `CSIAddCode()`, `CSIAddCode1()`, `CSIAddCode2()`
+    - added `NewStyle()`, `NewControlCode()`, `NewFeCode()`
+    - added `Color256table` for testing
+    - `fmtbufS`
+      - added `CWriter` and `FmtBuf` interfaces for `fmtbufS`
+      - improved.
+  - cleanup `is/term/color`
+
 - v0.8.27
   - add `colors.go` to `is/term/color`
     - change `color.Color` from `int` to `interface{...}`
