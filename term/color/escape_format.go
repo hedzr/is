@@ -124,7 +124,7 @@ func (c dummyS) Bg(out io.Writer, bgColor Color, cb func(out io.Writer)) {
 }
 func (c dummyS) bg(out io.Writer, bg Color, cb func(out io.Writer)) {
 	cb(out)
-	return
+	_ = bg
 }
 
 var _ Translator = (*dummyS)(nil)       // ensure cpTranslator implements Translator
