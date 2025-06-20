@@ -3,6 +3,7 @@ package color
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	"strconv"
 	"unicode/utf8"
@@ -12,9 +13,15 @@ import (
 // sequences code in terminal/tty/console.
 //
 // The supported object includes 4-bit (16-colors),
-// 8-bit (256 colors) and 16-bit (true-colors)
+// 8-bit (256 colors) and 24-bit (true-colors)
 // encoders. See also [NewColor16], [NewColor256]
 // and [NewColor16m].
+//
+// These objects are Color (s):
+//
+//   - Style (multiple Color items)
+//   - ControlCode (eg: ESC, CR, FF, LF, HT, BS, BEL)
+//   - FeCode (eg: SS2, SS3, DCS, ...)
 //
 // Control codes and more sequences will be
 // supported soon.
@@ -27,6 +34,9 @@ type Color interface {
 var _ Color = (*Color16)(nil)
 var _ Color = (*Color256)(nil)
 var _ Color = (*Color16m)(nil)
+var _ Color = (*Style)(nil)
+var _ Color = (*ControlCode)(nil)
+var _ Color = (*FeCode)(nil)
 
 // NewColor16m constrcuts a true-color object
 // which can be serialized as ansi escaped
