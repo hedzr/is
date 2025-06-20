@@ -46,6 +46,18 @@ func NewColor256(clr byte, isBg bool) Color256 {
 	}
 }
 
+// Color256table prints a 8-bit color table for testing
+func Color256table(out io.Writer) {
+	for row := range 16 {
+		for col := range 16 {
+			val := row*16 + col
+			c := NewColor256(byte(val), true)
+			fmt.Fprintf(out, "%s %3d %s", c, val, SGRdefaultBg)
+		}
+		fmt.Fprintln(out)
+	}
+}
+
 // NewColor16 cast a clr to Color16.
 //
 // Valid Color16 color codes include:
