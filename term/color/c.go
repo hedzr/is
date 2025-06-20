@@ -95,7 +95,7 @@ func (s *Cursor) Reset() {
 	// // s.sw = &s.sb
 	// s.w = os.Stdout
 	// s.sw = os.Stdout
-	return
+	// return
 }
 
 func (s *Cursor) Build() (r string) {
@@ -309,10 +309,7 @@ const formfeed = '\x0c'       // CTRL-L FF, Move a printer to top of next page. 
 const carriagereturn = '\x0d' // CTRL-M CR, Moves the cursor to column zero.
 const escape = '\x1b'         // CTRL-[ ESC, Starts all the escape sequences
 const csi = "\x1b["
-const ESC = '\x1b'
-const CSI = '[' // \x9B
-const DCS = 'P' // \x90
-const OSC = ']' // \x9D
+const ESCAPE = '\x1b'
 
 const (
 	Reset Color16 = iota
