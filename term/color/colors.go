@@ -87,6 +87,21 @@ func NewFeCode(code FeCode) FeCode {
 	return code
 }
 
+func CSIAddCode(code CSIsuffix) (c CSICodes) {
+	c.Items = append(c.Items, code.Code())
+	return
+}
+
+func CSIAddCode1(code CSIsuffix, n int) (c CSICodes) {
+	c.Items = append(c.Items, code.Code1(n))
+	return
+}
+
+func CSIAddCode2(code CSIsuffix, n, m int) (c CSICodes) {
+	c.Items = append(c.Items, code.Code2(n, m))
+	return
+}
+
 type Color16 int // ANSI Escaped Sequences here
 
 func (c Color16) Color() string {
@@ -274,18 +289,214 @@ const (
 	APC FeCode = '\x9F' // ESC _
 )
 
+// CSICodes wraps several csiCode together.
+//
+// The best way for creating a CSI sequence is using
+// [CSIsuffix.Code], [CSIsuffix.Code1] and
+// [CSIsuffix.Code2].
+//
+// Or you can use thees function: [CSIAddCode],
+// [CSIAddCode1] and [CSIAddCode2].
+//
+// For example,
+//
+//	c := CSICursorUp.Code1(7)
+//	fmt.Printf("%s", c) // move cursor up 7 lines
+//	c := CSICursorPosition.Code2(2, 3) // move cursor to row 2 col 3
+//	fmt.Printf("%s", c)
+//
+//	c := color.CSICursorUp.Code1(7)
+//	fmt.Printf("%s", c) // move cursor up 7 lines
+//	d := color.CSICursorDown.Code1(7)
+//	fmt.Printf("%s", d) // move cursor down 7 lines
+//
+//	fmt.Printf("%s", color.New().SavePos().Build())
+//
+//	var cx color.CSICodes
+//	cx.AddCode2(color.CSICursorPosition, 2, 3) // move cursor to row 2 col 3
+//	fmt.Printf("%s", cx)
+//
+//	fmt.Printf("%s", color.New().RestorePos().Build())
+type CSICodes struct {
+	Items []csiCode
 }
 
-func (c Color256) Color() string {
+func (c *CSICodes) AddCode(code CSIsuffix) {
+	c.Items = append(c.Items, code.Code())
+}
+
+func (c *CSICodes) AddCode1(code CSIsuffix, n int) {
+	c.Items = append(c.Items, code.Code1(n))
+}
+
+func (c *CSICodes) AddCode2(code CSIsuffix, n, m int) {
+	c.Items = append(c.Items, code.Code2(n, m))
+}
+
+func (c CSICodes) core(out CWriter) {
+	for i, it := range c.Items {
+		if i > 0 {
+			_ = out.WriteByte(';')
+		}
+		it.core(out)
+	}
+}
+
+func (c CSICodes) Color() string {
+	var sb = NewFmtBuf()
+	if len(c.Items) > 0 {
+		cc := c.Items[0]
+		cc.prologue(sb)
+		cc.core(sb)
+		cc.epilogue(sb)
+	}
+	return sb.PutBack()
+}
+
+func (c CSICodes) ColorTo(out io.Writer) {
+	wrString(out, c.Color())
+}
+
+func (c CSICodes) Int() (color int) {
+	return
+}
+
+func (c CSICodes) String() string { return c.Color() }
+
+const (
+	CSICursorUp       CSIsuffix = 'A' // ESC n A   - CUU - Cursor Up. move the cursor n (default 1) cells in the given direction
+	CSICursorDown     CSIsuffix = 'B' // ESC n B   - CUD - Cursor Down. move the cursor n (default 1) cells in the given direction
+	CSICursorForward  CSIsuffix = 'C' // ESC n C   - CUF - Cursor Forward. move the cursor n (default 1) cells in the given direction
+	CSICursorBack     CSIsuffix = 'D' // ESC n D   - CUB - Cursor Back. move the cursor n (default 1) cells in the given direction
+	CSICursorNextLine CSIsuffix = 'E' // ESC n E   - CNL - Cursor Next Line. move to beginning of the line n lines down
+	CSICursorPrevLine CSIsuffix = 'F' // ESC n F   - CPL - Cursor Previous Line. move to beginning of the line n lines up
+	CSICursorHorzAbs  CSIsuffix = 'G' // ESC n G   - CHA - Cursor Horizontal Absolute. move to column n
+	CSICursorPosition CSIsuffix = 'H' // ESC n;m H - CUP - Cursor Position. move the cursor to row n, column m (1-based)
+	CSIEraseInDisplay CSIsuffix = 'J' // ESC n J   - ED  - Erase in Screen. clears part of the screen. if n is 0, clear from cursor to end of scrren. 1 to beginning, 2 for entire screen and move to up-left corner, 3 for all screen and clear them in the scrollback buffer.
+	CSIEraseInLine    CSIsuffix = 'K' // ESC n K   - EL  - Erase in Line. clears part of the line. if n is 0, clear from cursor to the end of the line. 1 to begining, 2 for entire line. cursor position does not change.
+	CSIScrollUp       CSIsuffix = 'S' // ESC n S   - SU  - Scroll UP. scroll whole page up by n lines.
+	CSIScrollDown     CSIsuffix = 'T' // ESC n T   - SD  - Scroll DOWN. scroll whole page down by n lines.
+
+	CSIHorzVertPosition   CSIsuffix = 'f' // ESC n;m f - HVP - Horizontal Vertical Position. Same as CUP, but counts as a format effector function (lick CR or LF) rather than an editor function (like CUD or CNL).
+	CSIAuxPortOn          CSIsuffix = '5' // ESC 5i    -     - Enable aux serial port usually for local serial printer
+	CSIAuxPortOff         CSIsuffix = '4' // ESC 4i    -     - Disable aux serial port
+	CSIDeviceStatusReport CSIsuffix = '6' // ESC 6n    -     - Reports the cursor postion (CPR) by transmitting `ESC [n;mR`
+
+	// use SGRxxx instead CSISGR
+	CSISGR CSIsuffix = 'H' // ESC n m   - SGR - Select Grapthic Rendition. Sets colors and style of the characters following this code.
+)
+
+// CSICode will be expanded to `CSI n byte` form.
+// For example, Cursor Up ('A') expands as `CSI n A`.
+type CSICode struct {
+	N      int
+	Suffix CSIsuffix
+}
+
+type csiCode interface {
+	prologue(out CWriter)
+	core(out CWriter)
+	epilogue(out CWriter)
+	And(cs CSIsuffix, n ...int) (codes CSICodes)
+}
+
+func (c CSICode) prologue(out CWriter) {
+	_, _ = out.WriteString(csi)
+}
+
+func (c CSICode) epilogue(out CWriter) {
+	_ = out.WriteByte(byte(c.Suffix))
+}
+
+func (c CSICode) core(out CWriter) {
+	if c.N > 1 {
+		_, _ = out.WriteInt(c.N)
+	}
+}
+
+func (c CSICode) Color() string {
+	var sb = NewFmtBuf()
+	c.prologue(sb)
+	c.core(sb)
+	c.epilogue(sb)
+	return sb.PutBack()
+}
+
+func (c CSICode) String() string { return c.Color() }
+
+func (c CSICode) ColorTo(out io.Writer) {
+	wrString(out, c.Color())
+}
+
+func (c CSICode) Int() (color int) {
+	return
+}
+
+func (c CSICode) And(cs CSIsuffix, n ...int) (codes CSICodes) {
+	codes.Items = append(codes.Items, c)
+	switch len(n) {
+	case 0:
+		codes.Items = append(codes.Items, cs.Code())
+	case 1:
+		var nn = 1
+		for _, ni := range n {
+			nn = ni
+		}
+		codes.Items = append(codes.Items, cs.Code1(nn))
+	case 2:
+		nn, nm := n[0], n[1]
+		codes.Items = append(codes.Items, cs.Code2(nn, nm))
+	}
+	return
+}
+
+type CSICode2 struct {
+	M int
+	CSICode
+}
+
+func (c CSICode2) core(out CWriter) {
+	if c.N > 1 {
+		_, _ = out.WriteInt(c.N)
+	}
+	_ = out.WriteByte(',')
+	if c.M > 1 {
+		_, _ = out.WriteInt(c.M)
+	}
+}
+
+type CSIsuffix byte
+
+func (c CSIsuffix) Code() CSICode {
+	return CSICode{1, c}
+}
+
+func (c CSIsuffix) Code1(n int) CSICode {
+	return CSICode{n, c}
+}
+
+func (c CSIsuffix) Code2(n, m int) CSICode2 {
+	return CSICode2{m, CSICode{n, c}}
+}
+
+func (c CSIsuffix) Color() string {
 	var sb = NewFmtBuf()
 	_, _ = sb.WriteString(csi)
-	if c.bg {
-		_, _ = sb.WriteString("48;5;")
-	} else {
-		_, _ = sb.WriteString("38;5;")
-	}
-	_, _ = sb.WriteInt(int(c.clr[0])) // r
-	_, _ = sb.WriteRune('m')
+	_ = sb.WriteByte(byte(c))
+	return sb.PutBack()
+}
+
+func (c CSIsuffix) String() string { return c.Color() }
+
+func (c CSIsuffix) ColorTo(out io.Writer) {
+	wrString(out, c.Color())
+}
+
+func (c CSIsuffix) Int() (color int) {
+	color = int(byte(c))
+	return
+}
+
 	return sb.PutBack()
 }
 
