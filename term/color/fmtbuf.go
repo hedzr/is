@@ -1,10 +1,15 @@
 package color
 
 import (
+	"io"
 	"strconv"
 	"sync"
 	"unicode/utf8"
 )
+
+func NewFmtBuf() (s *fmtbufS) {
+	return colorFormatBufPool.Get().(*fmtbufS)
+}
 
 var _ CWriter = (*fmtbufS)(nil)
 var _ FmtBuf = (*fmtbufS)(nil)
@@ -24,7 +29,7 @@ type CWriter interface {
 
 var colorFormatBufPool = sync.Pool{
 	New: func() any {
-		return newColorFormatBufPool().reset()
+		return newColorFormatBufPool().Reset()
 	},
 }
 
@@ -38,17 +43,13 @@ type fmtbufS struct {
 	buffer []byte
 }
 
-func NewFmtBuf() (s *fmtbufS) {
-	return colorFormatBufPool.Get().(*fmtbufS)
-}
-
 func (s *fmtbufS) PutBack() (str string) {
 	str = string(s.buffer)
-	colorFormatBufPool.Put(s.reset())
+	colorFormatBufPool.Put(s.Reset())
 	return
 }
 
-func (s *fmtbufS) reset() *fmtbufS {
+func (s *fmtbufS) Reset() *fmtbufS {
 	s.buffer = s.buffer[0:0]
 	return s
 }
