@@ -112,6 +112,8 @@ func CSIAddCode2(code CSIsuffix, n, m int) (c CSICodes) {
 
 type Color16 int // ANSI Escaped Sequences here
 
+func (c Color16) String() string { return c.Color() }
+
 func (c Color16) Color() string {
 	var sb = NewFmtBuf()
 	if i := int(c); i >= 0 {
@@ -130,25 +132,45 @@ func (c Color16) ColorTo(out io.Writer) {
 	}
 }
 
-func wrString(out io.Writer, str string) {
-	data := []byte(str)
-	_, _ = out.Write(data)
-}
-func wrInt(out io.Writer, i int) {
-	var buffer []byte
-	buffer = strconv.AppendInt(buffer, int64(i), 10)
-	_, _ = out.Write(buffer)
-}
-func wrRune(out io.Writer, r rune) {
-	// n1 := len(s.buffer)
-	var buffer []byte
-	buffer = utf8.AppendRune(buffer, r)
-	_, _ = out.Write(buffer)
-	// return len(s.buffer) - n1, nil
-}
-
 func (c Color16) Int() int {
 	return int(c)
+}
+
+type Color256 struct {
+	// r, g, b, a byte
+	clr [4]byte
+	bg  bool
+}
+
+func (c Color256) String() string { return c.Color() }
+
+func (c Color256) Color() string {
+	var sb = NewFmtBuf()
+	_, _ = sb.WriteString(csi)
+	if c.bg {
+		_, _ = sb.WriteString("48;5;")
+	} else {
+		_, _ = sb.WriteString("38;5;")
+	}
+	_, _ = sb.WriteInt(int(c.clr[0])) // r
+	_, _ = sb.WriteRune('m')
+	return sb.PutBack()
+}
+
+func (c Color256) ColorTo(out io.Writer) {
+	wrString(out, csi)
+	if c.bg {
+		wrString(out, "48;5;")
+	} else {
+		wrString(out, "38;5;")
+	}
+	wrInt(out, int(c.clr[0])) // n
+	wrRune(out, 'm')
+}
+
+func (c Color256) Int() (color int) {
+	_, _ = binary.Decode(c.clr[0:4], binary.LittleEndian, &color)
+	return
 }
 
 type Color16m struct {
@@ -156,6 +178,8 @@ type Color16m struct {
 	clr [4]byte
 	bg  bool
 }
+
+func (c Color16m) String() string { return c.Color() }
 
 func (c Color16m) Color() string {
 	var sb = NewFmtBuf()
@@ -637,6 +661,26 @@ const (
 	SGRbgWhite // Light LightGray
 )
 
+//
+// ------ -------
+//
+
+func wrString(out io.Writer, str string) {
+	data := []byte(str)
+	_, _ = out.Write(data)
+}
+func wrInt(out io.Writer, i int) {
+	var buffer []byte
+	buffer = strconv.AppendInt(buffer, int64(i), 10)
+	_, _ = out.Write(buffer)
+}
+func wrRune(out io.Writer, r rune) {
+	// n1 := len(s.buffer)
+	var buffer []byte
+	buffer = utf8.AppendRune(buffer, r)
+	_, _ = out.Write(buffer)
+	// return len(s.buffer) - n1, nil
+}
 
 const (
 	// https://en.wikipedia.org/wiki/ANSI_escape_code
