@@ -262,7 +262,10 @@ func ExampleNewRowsBlock() {
 		str := fmt.Sprintf("%sHello, World!\n", spc)
 		rb.Update(str)
 	}
-	// Output:
+
+	// don't test this example because the outputs on different tty (or ci servers) could fail.
+
+	// Outputs:
 	// [0G[2KHello, World!
 	// [0G[2K[1A[2K[0G+Hello, World!
 	// [0G[2K[1A[2K[0G++Hello, World!
@@ -273,6 +276,22 @@ func ExampleNewRowsBlock() {
 	// [0G[2K[1A[2K[0G+++++++Hello, World!
 	// [0G[2K[1A[2K[0G++++++++Hello, World!
 	// [0G[2K[1A[2K[0G+++++++++Hello, World!
+}
+
+func TestExampleNewRowsBlock(t *testing.T) {
+	if !testing.Verbose() {
+		return
+	}
+
+	rb := color.NewRowsBlock()
+
+	// the following outputs will be displayed in first
+	// line of the RowsBlock.
+	for ul := range 10 {
+		spc := strings.Repeat("+", ul)
+		str := fmt.Sprintf("%sHello, World!\n", spc)
+		rb.Update(str)
+	}
 }
 
 func ExampleNewSGR() {
