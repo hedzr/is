@@ -1,6 +1,7 @@
 package color
 
 import (
+	"fmt"
 	"io"
 	"strconv"
 	"sync"
@@ -29,13 +30,13 @@ type CWriter interface {
 
 var colorFormatBufPool = sync.Pool{
 	New: func() any {
-		return newColorFormatBufPool().Reset()
+		return newColorFormatBufPool()
 	},
 }
 
 func newColorFormatBufPool() *fmtbufS {
 	return &fmtbufS{
-		buffer: make([]byte, 32),
+		buffer: make([]byte, 0, 32),
 	}
 }
 
@@ -52,6 +53,13 @@ func (s *fmtbufS) PutBack() (str string) {
 func (s *fmtbufS) Reset() *fmtbufS {
 	s.buffer = s.buffer[0:0]
 	return s
+}
+
+func (s *fmtbufS) Printf(format string, args ...any) (n int, err error) {
+	n = len(s.buffer)
+	s.buffer = fmt.Appendf(s.buffer, format, args...)
+	n = len(s.buffer) - n
+	return
 }
 
 func (s *fmtbufS) Write(data []byte) (n int, err error) {
