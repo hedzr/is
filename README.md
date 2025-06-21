@@ -35,6 +35,8 @@ The old `DebugMode` and `DebugBuild` are still work:
 - `DebugBuild`: `-tags=delve` is set at building.
 - `DebugMode`: `--debug` is specified at command line.
 
+Since v0.8.27, `basics.Signals().Catcher().WaitFor()` wants `ctx` param passed in.
+
 ## Usages
 
 ```go
@@ -78,22 +80,26 @@ func main() {
 `, color.FgDefault))
 
     ctx, cancel := context.WithCancel(context.Background())
+    var cancelled int32
+
     catcher := is.Signals().Catch()
     catcher.
         WithPrompt("Press CTRL-C to quit...").
         WithOnLoopFunc(dbStarter, cacheStarter, mqStarter).
-        WithOnSignalCaught(func(sig os.Signal, wg *sync.WaitGroup) {
+        WithOnSignalCaught(func(ctx context.Context, sig os.Signal, wg *sync.WaitGroup) {
             println()
             slog.Info("signal caught", "sig", sig)
             cancel() // cancel user's loop, see Wait(...)
         }).
-        WaitFor(func(closer func()) {
+        WaitFor(ctx, func(ctx context.Context, closer func()) {
             slog.Debug("entering looper's loop...")
             defer close() // notify catcher we want to shutdown
             // to terminate this app after a while automatically:
             time.Sleep(10 * time.Second)
 
-            is.PressAnyKeyToContinue(os.Stdin)
+            if atomic.CompareAndSwapInt32(&cancelled, 0, 1) {
+                is.PressAnyKeyToContinue(os.Stdin)
+            }
         })
 }
 
@@ -252,6 +258,10 @@ t.Logf("%v", color.StripHTMLTags(`
 ### `Cursor`
 
 Since v0.8+, A new `color.Cursor` object can be initialized by `color.New()`, which support format the colorful text with streaming calls, for console/tty.
+
+> See [the online docs](https://docs.hedzr.com/docs/is/) for more usages.
+
+<details title="Expand"><caption>expand</caption><detail>
 
 The examples are:
 
@@ -438,6 +448,8 @@ func ExampleCursor_StripLeftTabsColorful() {
 }
 ```
 
+</detail></details>
+
 ## Integrated with `cmdr`
 
 ### `Closers`
@@ -513,7 +525,7 @@ func main() {
         // WithVerboseFn(func(msg string, args ...any) {
         //     logz.WithSkip(2).Verbose(fmt.Sprintf("[verbose] %s", fmt.Sprintf(msg, args...)))
         // }).
-        WithOnSignalCaught(func(sig os.Signal, wg *sync.WaitGroup) {
+        WithOnSignalCaught(func(ctx context.Context, sig os.Signal, wg *sync.WaitGroup) {
             println()
             logz.Debug("signal caught", "sig", sig)
             if err := server.Shutdown(); err != nil {
@@ -521,13 +533,15 @@ func main() {
             }
             cancel()
         }).
-        WaitFor(func(closer func()) {
+        WaitFor(ctx, func(ctx context.Context, closer func()) {
             logz.Debug("entering looper's loop...")
 
             server.WithOnShutdown(func(err error, ss net.Server) { closer() })
             err := server.ListenAndServe(ctx, nil)
             if err != nil {
                 logz.Fatal("server serve failed", "err", err)
+            } else {
+                closer()
             }
         })
 }
