@@ -1,8 +1,8 @@
 package is
 
 import (
+	"context"
 	"os"
-	"sync"
 	"testing"
 	"time"
 
@@ -51,15 +51,15 @@ func TestSignalStruct_Raise(t *testing.T) {
 		basics.VerboseFn("go routine 1 stopped.")
 	}()
 
+	ctx := context.Background()
 	Signals().Catch().
 		WithPrompt().
-		Wait(func(stopChan chan<- os.Signal, wgShutdown *sync.WaitGroup) {
+		WaitFor(ctx, func(ctx context.Context, closer func()) {
 			go func() {
 				basics.VerboseFn("[cb] raising interrupt after a second...")
 				time.Sleep(2500 * time.Millisecond)
-				stopChan <- os.Interrupt
 				basics.VerboseFn("[cb] raised.")
-				wgShutdown.Done()
+				closer()
 			}()
 		})
 }

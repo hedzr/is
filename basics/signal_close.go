@@ -1,6 +1,7 @@
 package basics
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"sync"
@@ -134,45 +135,12 @@ type Catcher interface {
 	WithPrompt(msg ...string) Catcher
 	// WithOnSignalCaught setups handlers while any os signals caught by app.
 	WithOnSignalCaught(cb ...OnSignalCaught) Catcher
-	// WithOnLoop setups OnLooper handlers.
-	//
-	// Generally, the OnLooper handlers can be sent to Wait(...) while invoked.
-	// But you can always register some looper(s) before Wait(a-main-looper).
-	//
-	// For example:
-	//
-	//	is.Signals().Catch().
-	//	    WithOnLoop(redisStarter, etcdStarter, mongoStarter, dbStarter).
-	//	    WaitFor(func(closer func()) {
-	//	        // pop3server.Debug("entering looper's loop...")
-	//
-	//	        // setup handler: close catcher's waiting looper while 'pop3server' shut down
-	//	        pop3server.WithOnShutdown(func(err error, ss net.Server) { closer() })
-	//
-	//	        go func() {
-	//	            err := pop3server.ListenAndServe(ctx, nil)
-	//	            if err != nil {
-	//	                pop3server.Error("server serve failed", "err", err)
-	//	                panic(err)
-	//	            }
-	//	        }()
-	//	    })
-	//
-	// Deprecated since v0.7.3
-	WithOnLoop(cb ...OnLooper) Catcher
+	// WithOnLoopFunc _
+	// Deprecated since v0.8.x
 	WithOnLoopFunc(cb ...OnLooperFunc) Catcher
+	WithPeripherals(p ...Peripheral) Catcher
 	// WithVerboseFn gives a change to log he catcher's internal state.
 	WithVerboseFn(cb func(msg string, args ...any)) Catcher
-	// Wait get the current thread blocked on reading 'done' channel
-	// till an os signal break it.
-	//
-	// Each OnLooper must call wgDone.Done() to notify the looper was done.
-	//
-	// An optional way by sending os.Interrupt to stopChan could stop
-	// catcher Wait loop programmatically, if necessary.
-	//
-	// Deprecated since v0.7.3
-	Wait(stopperHandler OnLooper)
 	// WaitFor with param `cb func(closer func())` is used for your task.
 	//
 	// You should put your long-term codes inside `cb` of WaitFor(cb), and
@@ -201,12 +169,12 @@ type Catcher interface {
 	//	     logz.Fatal("server serve failed", "err", err)
 	//	   }
 	//	})
-	WaitFor(mainLooper OnLooperFunc)
+	WaitFor(ctx context.Context, mainLooper OnLooperFunc)
 }
 
-type OnSignalCaught func(sig os.Signal, wgShutdown *sync.WaitGroup)   // callback while an OS signal caught
-type OnLooper func(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) // callback while get into waiting loop
-type OnLooperFunc func(closer func())                                 // callback while get into waiting loop
+type OnSignalCaught func(ctx context.Context, sig os.Signal, wgShutdown *sync.WaitGroup) // callback while an OS signal caught
+type OnLooper func(stopChan chan<- os.Signal, wgDone *sync.WaitGroup)                    // callback while get into waiting loop
+type OnLooperFunc func(ctx context.Context, closer func())                               // callback while get into waiting loop
 
 type catsig struct {
 	signals         []os.Signal
@@ -214,6 +182,7 @@ type catsig struct {
 	onCaught        []OnSignalCaught
 	looperHandlers  []OnLooper
 	looperHandlers1 []OnLooperFunc
+	openPeripherals []func(ctx context.Context) (err error)
 	msg             string
 }
 
@@ -266,81 +235,27 @@ func (s *catsig) WithOnLoopFunc(cb ...OnLooperFunc) Catcher {
 	return s
 }
 
+func (s *catsig) WithPeripherals(peripherals ...Peripheral) Catcher {
+	for _, peripheral := range peripherals {
+		RegisterPeripheral(peripheral)
+		if p, ok := peripheral.(interface {
+			Open(ctx context.Context) error
+		}); ok {
+			s.openPeripherals = append(s.openPeripherals, func(ctx context.Context) (err error) {
+				err = p.Open(ctx)
+				return
+			})
+		}
+	}
+	return s
+}
+
 func (s *catsig) WithVerboseFn(cb func(msg string, args ...any)) Catcher {
 	VerboseFn = cb
 	return s
 }
 
-func (s *catsig) Wait(looperHandler OnLooper) {
-	defer Close()
-	defer s.Close()
-
-	var wgInitialized sync.WaitGroup
-	var wgForShutdown sync.WaitGroup
-	var closed int32
-
-	done := make(chan struct{}, 8)
-	shutDone := func() {
-		if atomic.CompareAndSwapInt32(&closed, 0, 1) {
-			verbose("closing done chan finally...")
-			close(done)
-		}
-	}
-	defer shutDone()
-
-	s.looperHandlers = append(s.looperHandlers, looperHandler)
-	wgInitialized.Add(len(s.looperHandlers))
-
-	cc := make(chan os.Signal, len(s.looperHandlers)*2+8) // allow buffering some signals
-	signals := s.signals
-	if len(signals) == 0 {
-		signals = []os.Signal{os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGINT}
-	}
-	signal.Notify(cc, signals...) //nolint:govet //whyNoLint for why
-
-	wgForShutdown.Add(len(s.looperHandlers))
-
-	for _, f := range s.looperHandlers {
-		go func(cc chan os.Signal, wgInitialized, wgForShutdown *sync.WaitGroup, f OnLooper) {
-			wgInitialized.Done()
-			f(cc, wgForShutdown)
-		}(cc, &wgInitialized, &wgForShutdown, f)
-	}
-	wgInitialized.Wait()
-
-	verbose("all looper(s) ran\n")
-
-	go func(wg *sync.WaitGroup) {
-		verbose("waiting for os signals...")
-		sig := <-cc
-		// verbose("caught a signal.")
-		for _, cb := range s.onCaught {
-			if cb != nil {
-				cb(sig, wg)
-			}
-		}
-		if len(s.onCaught) == 0 {
-			println()
-			verbose("signal caught", "sig", sig)
-		}
-		// verbose("wgForShutdown WAIT...\n")
-		wg.Wait()
-		verbose("wgForShutdown DONE.\n")
-		done <- struct{}{}
-	}(&wgForShutdown)
-
-	// enter the main loop here till someone raises a signal from looperHandlers
-	// by triggering such as `stopChan <- os.Interrupt`, or a user press
-	// CTRL-C in terminal, or others unexpected cases (such as panics).
-	verbose("waiting at <-done.")
-	if s.msg != "" {
-		println(s.msg)
-	}
-	<-done
-	verbose("ended.")
-}
-
-func (s *catsig) WaitFor(mainLooper OnLooperFunc) {
+func (s *catsig) WaitFor(ctx context.Context, mainLooper OnLooperFunc) {
 	defer Close()
 	defer s.Close()
 
@@ -362,26 +277,34 @@ func (s *catsig) WaitFor(mainLooper OnLooperFunc) {
 
 	var looperHandlers []OnLooperFunc
 	looperHandlers = append(looperHandlers, s.looperHandlers1...)
+	count := len(looperHandlers) + 1
+	wgInitialized.Add(count)
+	wgForShutdown.Add(count)
+	verbose("...%d looper functions added\n", count)
 	for _, cb := range s.looperHandlers {
-		looperHandlers = append(looperHandlers, func(closer func()) {
+		looperHandlers = append(looperHandlers, func(ctx context.Context, closer func()) {
+			defer closer()
 			cb(cc, &wgForShutdown)
-			closer()
 		})
 	}
 	looperHandlers = append(looperHandlers, mainLooper)
-	wgInitialized.Add(len(looperHandlers))
+
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	for _, p := range s.openPeripherals {
+		p(ctx)
+	}
 
 	if len(signals) == 0 {
 		signals = []os.Signal{os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGINT}
 	}
 	signal.Notify(cc, signals...) //nolint:govet //whyNoLint for why
 
-	wgForShutdown.Add(len(looperHandlers))
-
 	for _, f := range looperHandlers {
 		go func(cc chan os.Signal, wgInitialized, wgForShutdown *sync.WaitGroup, f OnLooperFunc) {
 			wgInitialized.Done()
-			f(func() { cc <- syscall.SIGINT; wgForShutdown.Done() })
+			f(ctx, func() { cc <- syscall.SIGINT; wgForShutdown.Done() })
 		}(cc, &wgInitialized, &wgForShutdown, f)
 	}
 	wgInitialized.Wait()
@@ -394,7 +317,7 @@ func (s *catsig) WaitFor(mainLooper OnLooperFunc) {
 		// verbose("caught a signal.")
 		for _, cb := range s.onCaught {
 			if cb != nil {
-				cb(sig, wg)
+				cb(ctx, sig, wg)
 			}
 		}
 		if len(s.onCaught) == 0 {

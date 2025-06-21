@@ -114,12 +114,12 @@ func MakeNewTerm(ctx context.Context, welcomeString, promptString, replyPrefix s
 		WithVerboseFn(func(msg string, args ...any) {
 			// logz.WithSkip(2).PrintlnContext(ctx, fmt.Sprintf("[verbose] %s\n", fmt.Sprintf(msg, args...)))
 		}).
-		WithOnSignalCaught(func(sig os.Signal, wg *sync.WaitGroup) {
+		WithOnSignalCaught(func(ctx context.Context, sig os.Signal, wg *sync.WaitGroup) {
 			println()
 			// logz.Debug("signal caught", "sig", sig)
 			exitChan <- struct{}{}
 		}).
-		WaitFor(func(closer func()) {
+		WaitFor(ctx, func(ctx context.Context, closer func()) {
 			if welcomeString != "" {
 				_, _ = fmt.Fprintln(term, welcomeString)
 			}
