@@ -1,4 +1,32 @@
 // Package color provides a wrapped standard output device like printf but with colored enhancements.
+//
+// The main types are [Cursor] and [Translator].
+//
+// [Cursor] allows formatting colorful text and moving cursor to another coordinate.
+//
+// [New] will return a [Cursor] object.
+//
+// [RowsBlock] is another cursor controller, which can treat the current line and following lines as a block and updating these lines repeatedly. This feature will help the progressbar writers or the continuous lines updater.
+//
+// [Translator] is a text and tiny HTML tags translator to convert these markup text into colorful console text sequences.
+// [GetCPT] can return a smart translator which translate colorful text or strip the ansi escaped sequence from result text if `states.Env().IsNoColorMode()` is true.
+//
+// [Color] is an interface type to represent a terminal color object, which can be serialized to ansi escaped sequence directly by [Color.Color].
+//
+// To create a [Color] object, there are several ways:
+//
+//   - by [NewColor16], or use [Color16] constants directly like [FgBlack], [BgGreen], ...
+//   - by [NewColor256] to make a 8-bit 256-colors object
+//   - by [NewColor16m] to make a true-color object
+//   - by [NewControlCode] or [ControlCode] constants
+//   - by [NewFeCode] or [FeCode] constants
+//   - by [NewSGR] or use [CSIsgr] constants directly like [SGRdim], [SGRstrike], ...
+//   - by [NewStyle] to make a compounded object
+//   - ...
+//
+// See also [docsite].
+//
+// [docsite]: https://docs.hedzr.com/docs/is
 package color
 
 import (
@@ -7,6 +35,8 @@ import (
 	"io"
 	"strconv"
 	"unicode/utf8"
+
+	_ "github.com/hedzr/is/states"
 )
 
 // Color interface represents an ansi escaped
@@ -37,6 +67,8 @@ var _ Color = (*Color16m)(nil)
 var _ Color = (*Style)(nil)
 var _ Color = (*ControlCode)(nil)
 var _ Color = (*FeCode)(nil)
+
+// var _ = states.Env().IsNoColorMode()
 
 // NewColor16m constrcuts a true-color object
 // which can be serialized as ansi escaped
@@ -561,114 +593,114 @@ func (c CSIsgr) Int() (color int) {
 }
 
 const (
-	SGRreset     CSIsgr = iota // reset or normal
-	SGRbold                    // bold or increased intensity
-	SGRdim                     // faint, decreased intensity, or dim
-	SGRitalic                  // italic
-	SGRunderline               // underline
-	SGRslowblink
-	SGRrapidblink
-	SGRinverse // reverse video or invert
-	SGRhide    // conceal or hide
-	SGRstrike  // crossed-out or strike
-	SGRprimaryfont
-	SGRalternativefont1
-	SGRalternativefont2
-	SGRalternativefont3
-	SGRalternativefont4
-	SGRalternativefont5
-	SGRalternativefont6
-	SGRalternativefont7
-	SGRalternativefont8
-	SGRalternativefont9
-	SGRgothic          // Fraktur (Gothic), rarely supported
-	SGRdoublyUnderline // doubly underlined, or not bold
-	SGRresetBoldAndDim // neither bold nor faint
-	SGRresetItalic     //
-	SGRresetUnderline  // reset singly or doubly underlined
-	SGRresetSlowBlink  // turn blink off
-	SGRresetRapidBlink // proportional spacing
-	SGRresetInverse    //
-	SGRresetHide       // not concealed
-	SGRresetStrike     // not cross-out
-	SGRfgBlack         //
-	SGRfgRed
-	SGRfgGreen
-	SGRfgYellow
-	SGRfgBlue
-	SGRfgMagenta
-	SGRfgCyan
-	SGRfgLightGray
-	SGRsetFg     // use [NewColor256] or [NewColor16m]. 8-bit color; next arguments are `5;n` or `2;r;g;b`
-	SGRdefaultFg //
-	SGRbgBlack
-	SGRbgRed
-	SGRbgGreen
-	SGRbgYellow
-	SGRbgBlue
-	SGRbgMagenta
-	SGRbgCyan
-	SGRbgLightGray
-	SGRsetBg     // use [NewColor256] or [NewColor16m]. 8-bit color; next arguments are `5;n` or `2;r;g;b`.
-	SGRdefaultBg //
-	SGRdisableProportionalSpacing
-	SGRframed
-	SGRencircled
-	SGRoverlined // not supported in Terminal.app
-	SGRneitherFramedNorEncircled
-	SGRnotoverlined
-	SGRreserved56
-	SGRreserved57
-	SGRsetUnderlineColor // not om standard; implemented in Kitty, VTE, mintty, and iTerm2. Next arguments are `5;n` or `2;r;g;b`.
-	SGRdefaultUnderlineColor
-	SGRideogramUnderline // Ideogram underline or right side line
-	SGRideogramDoubleUnderline
-	SGRideogramOverline
-	SGRideogramDoubleOverline
-	SGRideogramStressMarking
-	SGRresetIdeogram
-	SGRreserved66
-	SGRreserved67
-	SGRreserved68
-	SGRreserved69
-	SGRreserved70
-	SGRreserved71
-	SGRreserved72
-	SGRsuperscript
-	SGRsubscript
-	SGRresetSuperscriptAndSubscript
-	SGRreserved76
-	SGRreserved77
-	SGRreserved78
-	SGRreserved79
-	SGRreserved80
-	SGRreserved81
-	SGRreserved82
-	SGRreserved83
-	SGRreserved84
-	SGRreserved85
-	SGRreserved86
-	SGRreserved87
-	SGRreserved88
-	SGRreserved89
-	SGRfgDarkGray // light black
-	SGRfgLightRed
-	SGRfgLightGreen
-	SGRfgLightYellow
-	SGRfgLightBlue
-	SGRfgLightMagenta
-	SGRfgLightCyan
-	SGRfgWhite // Light LightGray
-	SGRreserved98
-	SGRreserved99
-	SGRbgDarkGray // light black
-	SGRbgLightRed
-	SGRbgLightGreen
-	SGRbgLightYellow
-	SGRbgLightBlue
-	SGRbgLightMagenta
-	SGRbgLightCyan
-	SGRbgWhite // Light LightGray
+	SGRreset                        CSIsgr = iota // reset or normal
+	SGRbold                                       // bold or increased intensity
+	SGRdim                                        // faint, decreased intensity, or dim
+	SGRitalic                                     // italic
+	SGRunderline                                  // underline
+	SGRslowblink                                  // blink
+	SGRrapidblink                                 // fast blink
+	SGRinverse                                    // reverse video or invert
+	SGRhide                                       // conceal or hide
+	SGRstrike                                     // crossed-out or strike
+	SGRprimaryfont                                //
+	SGRalternativefont1                           //
+	SGRalternativefont2                           //
+	SGRalternativefont3                           //
+	SGRalternativefont4                           //
+	SGRalternativefont5                           //
+	SGRalternativefont6                           //
+	SGRalternativefont7                           //
+	SGRalternativefont8                           //
+	SGRalternativefont9                           //
+	SGRgothic                                     // Fraktur (Gothic), rarely supported
+	SGRdoublyUnderline                            // doubly underlined, or not bold
+	SGRresetBoldAndDim                            // neither bold nor faint
+	SGRresetItalic                                // reset italic
+	SGRresetUnderline                             // reset singly or doubly underlined
+	SGRresetSlowBlink                             // turn blink off
+	SGRresetRapidBlink                            // proportional spacing
+	SGRresetInverse                               // reset inverse
+	SGRresetHide                                  // not concealed
+	SGRresetStrike                                // not cross-out
+	SGRfgBlack                                    //
+	SGRfgRed                                      //
+	SGRfgGreen                                    //
+	SGRfgYellow                                   //
+	SGRfgBlue                                     //
+	SGRfgMagenta                                  //
+	SGRfgCyan                                     //
+	SGRfgLightGray                                //
+	SGRsetFg                                      // use [NewColor256] or [NewColor16m]. 8-bit color; next arguments are `5;n` or `2;r;g;b`
+	SGRdefaultFg                                  // reset fg set by [SGRsetFg]
+	SGRbgBlack                                    //
+	SGRbgRed                                      //
+	SGRbgGreen                                    //
+	SGRbgYellow                                   //
+	SGRbgBlue                                     //
+	SGRbgMagenta                                  //
+	SGRbgCyan                                     //
+	SGRbgLightGray                                //
+	SGRsetBg                                      // use [NewColor256] or [NewColor16m]. 8-bit color; next arguments are `5;n` or `2;r;g;b`.
+	SGRdefaultBg                                  // reset bg set by [SGRsetBg]
+	SGRdisableProportionalSpacing                 //
+	SGRframed                                     //
+	SGRencircled                                  //
+	SGRoverlined                                  // not supported in Terminal.app
+	SGRneitherFramedNorEncircled                  //
+	SGRnotoverlined                               //
+	SGRreserved56                                 //
+	SGRreserved57                                 //
+	SGRsetUnderlineColor                          // not om standard; implemented in Kitty, VTE, mintty, and iTerm2. Next arguments are `5;n` or `2;r;g;b`.
+	SGRdefaultUnderlineColor                      //
+	SGRideogramUnderline                          // Ideogram underline or right side line
+	SGRideogramDoubleUnderline                    //
+	SGRideogramOverline                           //
+	SGRideogramDoubleOverline                     //
+	SGRideogramStressMarking                      //
+	SGRresetIdeogram                              //
+	SGRreserved66                                 //
+	SGRreserved67                                 //
+	SGRreserved68                                 //
+	SGRreserved69                                 //
+	SGRreserved70                                 //
+	SGRreserved71                                 //
+	SGRreserved72                                 //
+	SGRsuperscript                                //
+	SGRsubscript                                  //
+	SGRresetSuperscriptAndSubscript               //
+	SGRreserved76                                 //
+	SGRreserved77                                 //
+	SGRreserved78                                 //
+	SGRreserved79                                 //
+	SGRreserved80                                 //
+	SGRreserved81                                 //
+	SGRreserved82                                 //
+	SGRreserved83                                 //
+	SGRreserved84                                 //
+	SGRreserved85                                 //
+	SGRreserved86                                 //
+	SGRreserved87                                 //
+	SGRreserved88                                 //
+	SGRreserved89                                 //
+	SGRfgDarkGray                                 // high density colors, fg, light black
+	SGRfgLightRed                                 //
+	SGRfgLightGreen                               //
+	SGRfgLightYellow                              //
+	SGRfgLightBlue                                //
+	SGRfgLightMagenta                             //
+	SGRfgLightCyan                                //
+	SGRfgWhite                                    // Light LightGray
+	SGRreserved98                                 //
+	SGRreserved99                                 //
+	SGRbgDarkGray                                 // high density colors, bg, light black
+	SGRbgLightRed                                 //
+	SGRbgLightGreen                               //
+	SGRbgLightYellow                              //
+	SGRbgLightBlue                                //
+	SGRbgLightMagenta                             //
+	SGRbgLightCyan                                //
+	SGRbgWhite                                    // Light LightGray
 )
 
 //
