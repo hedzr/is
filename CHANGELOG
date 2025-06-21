@@ -1,5 +1,17 @@
 # CHANGELOG & HISTORY
 
+- v0.8.29
+  - improved `is/basic`.Signals.Catcher
+    - **BREAK** - passing ctx now
+    - **BREAK** - remove deprecated codes specially including `Wait()`
+    - update test codes
+    - update example apps
+    - update `hedzr/cmdr-docs-dev` for all relevant demo codes
+    - update all relevant projects, include `cmdr`, `cmdr.loaders`, ...
+  - improved `is/term/color`
+    - `*Cursor.CursorUp()` and similar funcs are now compliant with windows
+    - split `Translator` codes to sep files
+
 - v0.8.28
   - improved `is/term/color`
     - fix/improved color256,color16,color16m
