@@ -12,6 +12,61 @@ import (
 	"unsafe"
 )
 
+func (s *Cursor) pCSI(suffix byte, args ...int) csiS {
+	s.Flush()
+	switch suffix {
+	case 'A':
+		cursorUp(s.w, args[0])
+	case 'B':
+		cursorDown(s.w, args[0])
+	case 'C':
+		cursorRight(s.w, args[0])
+	case 'D':
+		cursorLeft(s.w, args[0])
+	case 'E', 'F', 'J', 'K':
+		cursorUp(s.w, args[0])
+	case 'G':
+		cursorHorizontalAbsolute(s.w, args[0])
+	case 'H':
+		cursorSetPos(s.w, args[0], args[1])
+	case 'S':
+		cursorScrollUp(s.w, args[0])
+	case 'T':
+		cursorScrollDown(s.w, args[0])
+	case 'f': //horz vert pos
+	case 's':
+		cursorSavePos(s.w)
+	case 'u':
+		cursorRestorePos(s.w)
+	}
+
+	return s.CSI(suffix, args...)
+}
+
+func (s *Cursor) CursorUp(n int) csiS      { return s.pCSI('A', n) } // use color.Up() instead of this
+func (s *Cursor) CursorDown(n int) csiS    { return s.pCSI('B', n) } // use color.Down() instead of this
+func (s *Cursor) CursorForward(n int) csiS { return s.pCSI('C', n) } // use color.Right() instead of this
+func (s *Cursor) CursorBack(n int) csiS    { return s.pCSI('D', n) } // use color.Left() instead of this
+
+func (s *Cursor) CursorNextLine(n int) csiS     { return s.pCSI('E', n) }        // Moves cursor to beginning of the line n (default 1) lines down. (not ANSI.SYS)
+func (s *Cursor) CursorPrevLine(n int) csiS     { return s.pCSI('F', n) }        // Moves cursor to beginning of the line n (default 1) lines up. (not ANSI.SYS)
+func (s *Cursor) CursorHorzCol(colAbs int) csiS { return s.pCSI('G', colAbs) }   // Moves the cursor to column n (default 1).
+func (s *Cursor) CursorPos(col, row int) csiS   { return s.pCSI('H', col, row) } //
+func (s *Cursor) CursorErase(n EraseTo) csiS    { return s.pCSI('J', int(n)) }   // Erase in Display
+func (s *Cursor) CursorEraseInLine(n int) csiS  { return s.pCSI('K', n) }        // Erase in Line
+
+func (s *Cursor) CursorScrollUp(n int) csiS   { return s.pCSI('S', n) } // use color.ScrollUp() instead of this
+func (s *Cursor) CursorScrollDown(n int) csiS { return s.pCSI('T', n) } // use color.ScrollDown() instead of this
+
+func (s *Cursor) CursorHorzVertPos(n, m int) csiS { return s.pCSI('f', n, m) } // Horizontal Vertical Position
+func (s *Cursor) CursorSGR(n int) csiS            { return s.pCSI('m', n) }    // Select Graphic Rendition
+func (s *Cursor) AUXPortOn() csiS                 { return s.pCSI('i', 5) }    // AUX Port On
+func (s *Cursor) AUXPortOff() csiS                { return s.pCSI('i', 4) }    // AUX Port Off
+func (s *Cursor) DSR() csiS                       { return s.pCSI('n', 6) }    // Device Status Report
+
+func (s *Cursor) CursorSavePos() csiS    { return s.pCSI('s') } // Save Current Cursor Position
+func (s *Cursor) CursorRestorePos() csiS { return s.pCSI('u') } // Restore Current Cursor Position
+
 type (
 	SHORT int16
 	WORD  uint16
@@ -210,14 +265,84 @@ func cursorLeft(w Writer, n int) {
 	}
 
 	x := consoleInfo.CursorPosition.X - SHORT(n)
+	if x < 1 {
+		x = 1
+	}
 	setConsoleCursorPosition(stdoutHandle, COORD{X: x, Y: consoleInfo.CursorPosition.Y})
 }
 
-func cursorScrollUp(w Writer, n int)   { writecsiseq(w, 'S', n) }
-func cursorScrollDown(w Writer, n int) { writecsiseq(w, 'T', n) }
+func cursorScrollUp(w Writer, n int) {
+	// writecsiseq(w, 'S', n)
+	var stdoutHandle uintptr = uintptr(syscall.Handle(w.Fd()))
+	consoleInfo, err := getConsoleScreenBufferInfo(stdoutHandle)
+	if err != nil {
+		return
+	}
 
-func cursorSavePos(w Writer)    { writecsi(w, 's') }
-func cursorRestorePos(w Writer) { writecsi(w, 'u') }
+	y := consoleInfo.CursorPosition.Y - SHORT(n)
+	if y < 1 {
+		y = 1
+	}
+	setConsoleCursorPosition(stdoutHandle, COORD{X: consoleInfo.CursorPosition.X, Y: y})
+}
+
+func cursorScrollDown(w Writer, n int) {
+	// writecsiseq(w, 'T', n)
+	var stdoutHandle uintptr = uintptr(syscall.Handle(w.Fd()))
+	consoleInfo, err := getConsoleScreenBufferInfo(stdoutHandle)
+	if err != nil {
+		return
+	}
+
+	y := consoleInfo.CursorPosition.Y + SHORT(n)
+	setConsoleCursorPosition(stdoutHandle, COORD{X: consoleInfo.CursorPosition.X, Y: y})
+}
+
+var savedCursorPos []COORD
+
+func cursorSavePos(w Writer) {
+	// writecsi(w, 's')
+	var stdoutHandle uintptr = uintptr(syscall.Handle(w.Fd()))
+
+	csbi, err := getConsoleScreenBufferInfo(stdoutHandle)
+	if err != nil {
+		return
+	}
+	coord := csbi.Size
+	savedCursorPos = append(savedCursorPos, coord)
+}
+
+func cursorRestorePos(w Writer) {
+	// writecsi(w, 'u')
+	if l := len(savedCursorPos); l > 0 {
+		coord := savedCursorPos[l-1]
+		savedCursorPos = savedCursorPos[0 : l-1]
+		var stdoutHandle uintptr = uintptr(syscall.Handle(w.Fd()))
+		_ = setConsoleCursorPosition(stdoutHandle, coord)
+	}
+}
+
+func cursorGetPos(w Writer) (row, col int) {
+	var stdoutHandle uintptr = uintptr(syscall.Handle(w.Fd()))
+
+	csbi, err := getConsoleScreenBufferInfo(stdoutHandle)
+	if err != nil {
+		return
+	}
+
+	col, row = int(csbi.Size.X), int(csbi.Size.Y)
+	return
+}
+
+func cursorSetPos(w Writer, row, col int) {
+	var stdoutHandle uintptr = uintptr(syscall.Handle(w.Fd()))
+
+	var cursor COORD
+	cursor.X = SHORT(col)
+	cursor.Y = SHORT(row)
+
+	_ = setConsoleCursorPosition(stdoutHandle, cursor)
+}
 
 func cursorHorizontalAbsolute(w Writer, n int) {
 	var stdoutHandle uintptr = uintptr(syscall.Handle(w.Fd()))

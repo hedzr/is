@@ -675,15 +675,26 @@ const (
 // ------ -------
 //
 
+func wrPrintf(out io.Writer, format string, args ...any) {
+	var data = make([]byte, 0, 32)
+	data = fmt.Appendf(data, format, args...)
+	_, _ = out.Write(data)
+	// buf := NewFmtBuf()
+	// buf.Printf(format, args...)
+	// _, _ = out.Write([]byte(buf.PutBack()))
+}
+
 func wrString(out io.Writer, str string) {
 	data := []byte(str)
 	_, _ = out.Write(data)
 }
+
 func wrInt(out io.Writer, i int) {
 	var buffer []byte
 	buffer = strconv.AppendInt(buffer, int64(i), 10)
 	_, _ = out.Write(buffer)
 }
+
 func wrRune(out io.Writer, r rune) {
 	// n1 := len(s.buffer)
 	var buffer []byte

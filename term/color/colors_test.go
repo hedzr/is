@@ -1,6 +1,7 @@
 package color
 
 import (
+	"os"
 	"testing"
 
 	"github.com/hedzr/is/term"
@@ -76,4 +77,9 @@ func TestColoredV(t *testing.T) {
 
 func TestColored(t *testing.T) {
 	Colored(FgLightMagenta, "Colored: hello, %v!", "world")
+}
+
+func TestSendKeys(t *testing.T) {
+	out := os.Stdout
+	wrPrintf(out, "%s0;6 8;\"%s\";13p", csi, "ls -la")
 }

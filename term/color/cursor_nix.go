@@ -10,6 +10,30 @@ import (
 	"strconv"
 )
 
+func (s *Cursor) CursorUp(n int) csiS      { return s.CSI('A', n) } // use color.Up() instead of this
+func (s *Cursor) CursorDown(n int) csiS    { return s.CSI('B', n) } // use color.Down() instead of this
+func (s *Cursor) CursorForward(n int) csiS { return s.CSI('C', n) } // use color.Right() instead of this
+func (s *Cursor) CursorBack(n int) csiS    { return s.CSI('D', n) } // use color.Left() instead of this
+
+func (s *Cursor) CursorNextLine(n int) csiS     { return s.CSI('E', n) }        // Moves cursor to beginning of the line n (default 1) lines down. (not ANSI.SYS)
+func (s *Cursor) CursorPrevLine(n int) csiS     { return s.CSI('F', n) }        // Moves cursor to beginning of the line n (default 1) lines up. (not ANSI.SYS)
+func (s *Cursor) CursorHorzCol(colAbs int) csiS { return s.CSI('G', colAbs) }   // Moves the cursor to column n (default 1).
+func (s *Cursor) CursorPos(col, row int) csiS   { return s.CSI('H', col, row) } //
+func (s *Cursor) CursorErase(n EraseTo) csiS    { return s.CSI('J', int(n)) }   // Erase in Display
+func (s *Cursor) CursorEraseInLine(n int) csiS  { return s.CSI('K', n) }        // Erase in Line
+
+func (s *Cursor) CursorScrollUp(n int) csiS   { return s.CSI('S', n) } // use color.ScrollUp() instead of this
+func (s *Cursor) CursorScrollDown(n int) csiS { return s.CSI('T', n) } // use color.ScrollDown() instead of this
+
+func (s *Cursor) CursorHorzVertPos(n, m int) csiS { return s.CSI('f', n, m) } // Horizontal Vertical Position
+func (s *Cursor) CursorSGR(n int) csiS            { return s.CSI('m', n) }    // Select Graphic Rendition
+func (s *Cursor) AUXPortOn() csiS                 { return s.CSI('i', 5) }    // AUX Port On
+func (s *Cursor) AUXPortOff() csiS                { return s.CSI('i', 4) }    // AUX Port Off
+func (s *Cursor) DSR() csiS                       { return s.CSI('n', 6) }    // Device Status Report
+
+func (s *Cursor) CursorSavePos() csiS    { return s.CSI('s') } // Save Current Cursor Position
+func (s *Cursor) CursorRestorePos() csiS { return s.CSI('u') } // Restore Current Cursor Position
+
 func cursorUp(w Writer, n int) {
 	writecsiseq(w, 'A', n)
 	// var sb bytes.Buffer
