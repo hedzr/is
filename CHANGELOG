@@ -1,5 +1,8 @@
 # CHANGELOG & HISTORY
 
+- v0.8.31
+  - nothing, just a stable release
+
 - v0.8.30
   - improved godoc for `color` pkg
   - fix version number
