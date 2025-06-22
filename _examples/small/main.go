@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/hedzr/is"
@@ -47,17 +48,20 @@ func main() {
 	println("term.GetTtySizeByFile(stdout): ", rows, cols, err)
 	println("term.IsStartupByDoubleClick:   ", term.IsStartupByDoubleClick())
 
+	var cancelled int32
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	catcher := is.Signals().Catch()
 	catcher.
 		WithPrompt("Press CTRL-C to quit...").
-		WithOnLoop(dbStarter, cacheStarter, mqStarter).
-		WithOnSignalCaught(func(sig os.Signal, wg *sync.WaitGroup) {
+		// WithOnLoop(dbStarter, cacheStarter, mqStarter).
+		WithPeripherals(&dbMgr{}).
+		WithOnSignalCaught(func(ctx context.Context, sig os.Signal, wg *sync.WaitGroup) {
 			println()
 			slog.Info("signal caught", "sig", sig)
 			cancel() // cancel user's loop, see Wait(...)
 		}).
-		WaitFor(func(closer func()) {
+		WaitFor(ctx, func(ctx context.Context, closer func()) {
 			slog.Debug("entering looper's loop...")
 			go func() {
 				// to terminate this app after a while automatically:
@@ -68,24 +72,31 @@ func main() {
 			<-ctx.Done() // waiting until any os signal caught
 			// wgDone.Done() // and complete myself
 
-			is.PressAnyKeyToContinue(os.Stdin)
+			if atomic.CompareAndSwapInt32(&cancelled, 0, 1) {
+				is.PressAnyKeyToContinue(os.Stdin)
+			}
 		})
 }
 
-func dbStarter(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
-	// initializing database connections...
-	// ...
-	wgDone.Done()
-}
+type dbMgr struct{}
 
-func cacheStarter(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
-	// initializing redis cache connections...
-	// ...
-	wgDone.Done()
-}
+func (*dbMgr) Close()                           {}         // before app terminatine
+func (*dbMgr) Open(context.Context) (err error) { return } // ran before catcher.WaitFor()
 
-func mqStarter(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
-	// initializing message queue connections...
-	// ...
-	wgDone.Done()
-}
+// func dbStarter(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
+// 	// initializing database connections...
+// 	// ...
+// 	wgDone.Done()
+// }
+
+// func cacheStarter(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
+// 	// initializing redis cache connections...
+// 	// ...
+// 	wgDone.Done()
+// }
+
+// func mqStarter(stopChan chan<- os.Signal, wgDone *sync.WaitGroup) {
+// 	// initializing message queue connections...
+// 	// ...
+// 	wgDone.Done()
+// }
