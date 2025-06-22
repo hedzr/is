@@ -79,13 +79,15 @@ func main() {
         <font color="green">green text</font>
 `, color.FgDefault))
 
-    ctx, cancel := context.WithCancel(context.Background())
     var cancelled int32
+    ctx, cancel := context.WithCancel(context.Background())
+    defer cancel()
 
     catcher := is.Signals().Catch()
     catcher.
         WithPrompt("Press CTRL-C to quit...").
-        WithOnLoopFunc(dbStarter, cacheStarter, mqStarter).
+        // WithOnLoopFunc(dbStarter, cacheStarter, mqStarter).
+        WithPeripherals(&dbMgr{}).
         WithOnSignalCaught(func(ctx context.Context, sig os.Signal, wg *sync.WaitGroup) {
             println()
             slog.Info("signal caught", "sig", sig)
@@ -103,23 +105,10 @@ func main() {
         })
 }
 
-func dbStarter(closer func()) {
- defer closer()
-    // initializing database connections...
-    // ...
-}
+type dbMgr struct{}
 
-func cacheStarter(closer func()) {
- defer closer()
-    // initializing redis cache connections...
-    // ...
-}
-
-func mqStarter(closer func()) {
- defer closer()
-    // initializing message queue connections...
-    // ...
-}
+func (*dbMgr) Close()                           {}         // before app terminatine
+func (*dbMgr) Open(context.Context) (err error) { return } // ran before catcher.WaitFor()
 ```
 
 Result is similar with:

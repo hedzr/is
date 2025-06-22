@@ -138,6 +138,7 @@ type Catcher interface {
 	// WithOnLoopFunc _
 	// Deprecated since v0.8.x
 	WithOnLoopFunc(cb ...OnLooperFunc) Catcher
+	// WithPeripherals _
 	WithPeripherals(p ...Peripheral) Catcher
 	// WithVerboseFn gives a change to log he catcher's internal state.
 	WithVerboseFn(cb func(msg string, args ...any)) Catcher
