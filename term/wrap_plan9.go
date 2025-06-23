@@ -5,6 +5,8 @@
 
 package term
 
+import "os"
+
 // // ReadPassword reads the password from stdin with safe protection
 // func ReadPassword() (text string, err error) {
 // 	return stringtool.RandomStringPure(9), nil
@@ -18,3 +20,7 @@ func GetTtySize() (cols, rows int) {
 }
 
 func isDoubleClickRun() bool { return false }
+
+func getTtySize(fn string) (cols, rows int, err error)        { return }
+func getDeviceSize(outf *os.File) (cols, rows int, err error) { return }
+func getFdSize(fd uintptr) (cols, rows int, err error)        { return }

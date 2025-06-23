@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/hedzr/is/term/chk"
 	"golang.org/x/term"
 )
 
@@ -91,7 +92,7 @@ func isTty(t *testing.T, what string, f *os.File) {
 
 func isColorful(t *testing.T, what string, f *os.File) {
 	t.Logf("IsColored(%q): %v (mine)",
-		what, IsColored(f),
+		what, chk.IsColored(f),
 	)
 }
 
