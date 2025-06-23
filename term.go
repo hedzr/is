@@ -7,21 +7,22 @@ import (
 	term2 "golang.org/x/term"
 
 	"github.com/hedzr/is/term"
+	"github.com/hedzr/is/term/chk"
 	"github.com/hedzr/is/term/color"
 )
 
 // Tty detects a writer if it is abstracting from a tty (console, terminal) device.
-func Tty(w io.Writer) bool { return term.IsTty(w) }
+func Tty(w io.Writer) bool { return chk.IsTty(w) }
 
 // ColoredTty detects a writer if it is a colorful tty device.
 //
 // A colorful tty device can receive ANSI escaped sequences and draw its.
-func ColoredTty(w io.Writer) bool { return term.IsColored(w) }
+func ColoredTty(w io.Writer) bool { return chk.IsColored(w) }
 
 // ColorfulTty detects a writer if it is a colorful tty device.
 //
 // A colorful tty device can receive ANSI escaped sequences and draw its.
-func ColorfulTty(w io.Writer) bool { return term.IsColorful(w) }
+func ColorfulTty(w io.Writer) bool { return chk.IsColorful(w) }
 
 // TtyEscaped detects a string if it contains ansi color escaped sequences
 // Deprecated v0.5.3, use HasAnsiEscaped
@@ -85,25 +86,25 @@ func TerminalFd(fd uintptr) bool {
 func Color() color.Index { return color.Index{} }
 
 func StdoutStat() (normalFile, redirected, piped, terminal bool) {
-	return term.StatStdout()
+	return chk.StatStdout()
 }
 
 func StdoutPiped() bool {
-	_, _, b, _ := term.StatStdout()
+	_, _, b, _ := chk.StatStdout()
 	return b
 }
 
 func StdoutRedirected() bool {
-	_, b, _, _ := term.StatStdout()
+	_, b, _, _ := chk.StatStdout()
 	return b
 }
 
 func StdoutIsTerminal() bool {
-	_, _, _, b := term.StatStdout()
+	_, _, _, b := chk.StatStdout()
 	return b
 }
 
 func StdoutIsNormalFile() bool {
-	b, _, _, _ := term.StatStdout()
+	b, _, _, _ := chk.StatStdout()
 	return b
 }
