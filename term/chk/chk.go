@@ -1,3 +1,4 @@
+// Package chk provides some checked terminal utilities.
 package chk
 
 import (
