@@ -32,7 +32,7 @@ func TestCSI(t *testing.T) {
 	c.CSI('B', 3).Printf("[dn] hello, %s.", "world").Println()
 
 	c.Printf("[BK] hello, %s.", "world").
-		CursorBack(6).Echo("there").
+		Back(6).Echo("there").
 		Println()
 
 	fmt.Print(c.String())
@@ -70,7 +70,7 @@ func TestColors(t *testing.T) {
 	var result = c.Println().
 		Color16(color.FgRed).
 		Printf("hello, %s.", "world").Println().
-		SavePos().
+		SavePosNow().
 		Println("x").
 		Color16(color.FgGreen).Printf("hello, %s.\n", "world").
 		Color256(160).Printf("[160] hello, %s.\n", "world").
@@ -79,12 +79,12 @@ func TestColors(t *testing.T) {
 		Color256(163).Printf("[163] hello, %s.\n", "world").
 		Color256(164).Printf("[164] hello, %s.\n", "world").
 		Color256(165).Printf("[165] hello, %s.\n", "world").
-		Up(3).Echo(" ERASED ").
+		UpNow(3).Echo(" ERASED ").
 		RGB(211, 211, 33).Printf("[16m] hello, %s.", "world").
 		Println().
-		RestorePos().
+		RestorePosNow().
 		Println("z").
-		Down(8).
+		DownNow(8).
 		Println("DONE").
 		Build()
 

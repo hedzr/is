@@ -12,6 +12,25 @@ type csiS struct {
 	*Cursor
 }
 
+// Echo prints contents into buffer for [Cursor.Build].
+func (s csiS) Echo(args ...string) *Cursor {
+	s.Cursor.Echo(args...)
+	return s.Cursor
+}
+
+// Print prints contents into buffer for [Cursor.Build].
+func (s csiS) Print(args ...any) *Cursor {
+	s.Cursor.Print(args...)
+	return s.Cursor
+}
+
+// Println prints contents into buffer for [Cursor.Build].
+func (s csiS) Println(args ...any) *Cursor {
+	s.Cursor.Println(args...)
+	return s.Cursor
+}
+
+// Printf prints contents into buffer for [Cursor.Build].
 func (s csiS) Printf(format string, args ...any) *Cursor {
 	_, _ = s.Cursor.sb.WriteString(csi)
 	if s.n > 0 {
@@ -26,18 +45,8 @@ func (s csiS) Printf(format string, args ...any) *Cursor {
 	return s.Cursor.Printf(format, args...)
 }
 
-func (s csiS) Echo(args ...string) *Cursor {
-	s.Cursor.Echo(args...)
-	return s.Cursor
-}
-
-func (s csiS) Println(args ...any) *Cursor {
-	s.Cursor.Println(args...)
-	return s.Cursor
-}
-
-func (s csiS) Print(args ...any) *Cursor {
-	s.Cursor.Print(args...)
+func (s csiS) ResetColor() *Cursor {
+	s.Cursor.ResetColor()
 	return s.Cursor
 }
 
@@ -88,63 +97,123 @@ func (s *Cursor) Flush() *Cursor {
 	return s
 }
 
-func (s *Cursor) HorizontalAbsolute(n int) *Cursor {
+// HorizontalAbsoluteNow writes content to the output writer (stdout) right now.
+// Generally the content will be sent to console instantly.
+//
+// If you wants a cached sequence into building buffer, use normal version.
+// For instance, [Cursor.HorizontalAbsolute], [Cursor.Up], [Cursor.Down],
+// and vice versa.
+func (s *Cursor) HorizontalAbsoluteNow(n int) *Cursor {
 	s.Flush()
 	cursorHorizontalAbsolute(s.w, n)
 	return s
 }
 
+// UpNow writes content to the output writer (stdout) right now.
+// Generally the content will be sent to console instantly.
+//
+// If you wants a cached sequence into building buffer, use normal version.
+// For instance, [Cursor.HorizontalAbsolute], [Cursor.Up], [Cursor.Down],
+// and vice versa.
+//
 // =color.Up()
-func (s *Cursor) Up(n int) *Cursor {
+func (s *Cursor) UpNow(n int) *Cursor {
 	s.Flush()
 	cursorUp(s.w, n)
 	return s
 }
 
+// DownNow writes content to the output writer (stdout) right now.
+// Generally the content will be sent to console instantly.
+//
+// If you wants a cached sequence into building buffer, use normal version.
+// For instance, [Cursor.HorizontalAbsolute], [Cursor.Up], [Cursor.Down],
+// and vice versa.
+//
 // =color.Down()
-func (s *Cursor) Down(n int) *Cursor {
+func (s *Cursor) DownNow(n int) *Cursor {
 	s.Flush()
 	cursorDown(s.w, n)
 	return s
 }
 
+// RightNow writes content to the output writer (stdout) right now.
+// Generally the content will be sent to console instantly.
+//
+// If you wants a cached sequence into building buffer, use normal version.
+// For instance, [Cursor.HorizontalAbsolute], [Cursor.Up], [Cursor.Down],
+// and vice versa.
+//
 // =color.Right()
-func (s *Cursor) Right(n int) *Cursor {
+func (s *Cursor) RightNow(n int) *Cursor {
 	s.Flush()
 	cursorRight(s.w, n)
 	return s
 }
 
+// LeftNow writes content to the output writer (stdout) right now.
+// Generally the content will be sent to console instantly.
+//
+// If you wants a cached sequence into building buffer, use normal version.
+// For instance, [Cursor.HorizontalAbsolute], [Cursor.Up], [Cursor.Down],
+// and vice versa.
+//
 // =color.Left()
-func (s *Cursor) Left(n int) *Cursor {
+func (s *Cursor) LeftNow(n int) *Cursor {
 	s.Flush()
 	cursorLeft(s.w, n)
 	return s
 }
 
+// ScrollUpNow writes content to the output writer (stdout) right now.
+// Generally the content will be sent to console instantly.
+//
+// If you wants a cached sequence into building buffer, use normal version.
+// For instance, [Cursor.HorizontalAbsolute], [Cursor.Up], [Cursor.Down],
+// and vice versa.
+//
 // =color.ScrollUp()
-func (s *Cursor) ScrollUp(n int) *Cursor {
+func (s *Cursor) ScrollUpNow(n int) *Cursor {
 	s.Flush()
 	cursorScrollUp(s.w, n)
 	return s
 }
 
+// ScrollDownNow writes content to the output writer (stdout) right now.
+// Generally the content will be sent to console instantly.
+//
+// If you wants a cached sequence into building buffer, use normal version.
+// For instance, [Cursor.HorizontalAbsolute], [Cursor.Up], [Cursor.Down],
+// and vice versa.
+//
 // =color.ScrollDown()
-func (s *Cursor) ScrollDown(n int) *Cursor {
+func (s *Cursor) ScrollDownNow(n int) *Cursor {
 	s.Flush()
 	cursorScrollDown(s.w, n)
 	return s
 }
 
+// SavePosNow flush all cached content and save cursor pos right now.
+//
+// If you wants a cached sequence into building buffer, use normal version.
+// For instance, [Cursor.HorizontalAbsolute], [Cursor.Up], [Cursor.Down],
+// and vice versa.
+//
 // =color.SavePos()
-func (s *Cursor) SavePos() *Cursor {
+func (s *Cursor) SavePosNow() *Cursor {
 	s.Flush()
 	cursorSavePos(s.w)
 	return s
 }
 
+// RestorePosNow flush all cached content and save cursor pos right now.
+//
+// If you wants a cached sequence into building buffer, use normal version.
+// For instance, [Cursor.HorizontalAbsolute], [Cursor.Up], [Cursor.Down],
+// and vice versa.
+//
 // =color.RestorePos()
-func (s *Cursor) RestorePos() *Cursor {
+func (s *Cursor) RestorePosNow() *Cursor {
 	s.Flush()
 	cursorRestorePos(s.w)
 	return s

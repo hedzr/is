@@ -30,10 +30,16 @@ func (s c16MS) writecsicode() {
 	}
 }
 
-// Printf prints CSI color sequences and prints the formatted text.
-func (s c16MS) Printf(format string, args ...any) *Cursor {
-	s.writecsicode()
-	return s.cS.Printf(format, args...)
+// Echo prints contents into buffer for [Cursor.Build].
+func (s c16MS) Echo(args ...string) *Cursor {
+	s.cS.Echo(args...)
+	return s.cS
+}
+
+// Print prints contents into buffer for [Cursor.Build].
+func (s c16MS) Print(args ...any) *Cursor {
+	s.cS.Print(args...)
+	return s.cS
 }
 
 // Println prints CSI color sequences and prints the formatted text.
@@ -43,18 +49,14 @@ func (s c16MS) Println(args ...any) *Cursor {
 	return s.cS
 }
 
+// Printf prints CSI color sequences and prints the formatted text.
+func (s c16MS) Printf(format string, args ...any) *Cursor {
+	s.writecsicode()
+	return s.cS.Printf(format, args...)
+}
+
 func (s c16MS) ResetColor() *Cursor {
 	s.cS.ResetColor()
-	return s.cS
-}
-
-func (s c16MS) Echo(args ...string) *Cursor {
-	s.cS.Echo(args...)
-	return s.cS
-}
-
-func (s c16MS) Print(args ...any) *Cursor {
-	s.cS.Print(args...)
 	return s.cS
 }
 

@@ -35,7 +35,7 @@ type c1ccS struct {
 // 	return s.Cursor
 // }
 
-func (s *Cursor) EraseLine() *Cursor {
+func (s *Cursor) EraseLineNow() *Cursor {
 	eraseLine(s.w, CursorEraseAll)
 	return s
 }

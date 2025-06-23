@@ -28,29 +28,33 @@ func (s c256S) writecsicode() {
 	}
 }
 
-func (s c256S) Printf(format string, args ...any) *Cursor {
-	s.writecsicode()
-	return s.cS.Printf(format, args...)
+// Echo prints contents into buffer for [Cursor.Build].
+func (s c256S) Echo(args ...string) *Cursor {
+	s.cS.Echo(args...)
+	return s.cS
 }
 
+// Print prints contents into buffer for [Cursor.Build].
+func (s c256S) Print(args ...any) *Cursor {
+	s.cS.Print(args...)
+	return s.cS
+}
+
+// Println prints contents into buffer for [Cursor.Build].
 func (s c256S) Println(args ...any) *Cursor {
 	s.writecsicode()
 	s.cS.Println(args...)
 	return s.cS
 }
 
+// Printf prints contents into buffer for [Cursor.Build].
+func (s c256S) Printf(format string, args ...any) *Cursor {
+	s.writecsicode()
+	return s.cS.Printf(format, args...)
+}
+
 func (s c256S) ResetColor() *Cursor {
 	s.cS.ResetColor()
-	return s.cS
-}
-
-func (s c256S) Echo(args ...string) *Cursor {
-	s.cS.Echo(args...)
-	return s.cS
-}
-
-func (s c256S) Print(args ...any) *Cursor {
-	s.cS.Print(args...)
 	return s.cS
 }
 

@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 
 	"github.com/hedzr/is/states"
-	"github.com/hedzr/is/term"
+	"github.com/hedzr/is/term/chk"
 )
 
 // New returns a *cS (Cursor) object so that you could
@@ -66,6 +66,10 @@ type Cursor struct {
 	closers []func()
 }
 
+type CursorPos struct {
+	Row, Col int
+}
+
 type Result struct {
 	bytes.Buffer
 }
@@ -80,7 +84,7 @@ func (s *Cursor) reinit(first bool) {
 	s.sw = os.Stdout
 	if first {
 		states.Env().SetOnNoColorChanged(s.updateCandidated)
-		s.colorful = term.IsColorful(os.Stdout)
+		s.colorful = chk.IsColorful(os.Stdout)
 	}
 }
 
@@ -118,7 +122,7 @@ func (s *Cursor) Build() (r string) {
 }
 
 func (s *Cursor) WithWriter(w io.Writer) *Cursor {
-	s.colorful = term.IsColorful(w)
+	s.colorful = chk.IsColorful(w)
 	s.useColor = !states.Env().IsNoColorMode()
 	if sw, ok := w.(Writer); ok {
 		s.w = sw
@@ -186,6 +190,7 @@ func (s *Cursor) StripHTMLTags(str string) *Cursor {
 	return s
 }
 
+// Echo prints contents into buffer for [Cursor.Build].
 func (s *Cursor) Echo(args ...string) *Cursor {
 	for _, z := range args {
 		_, _ = s.sb.WriteString(z)
@@ -193,11 +198,13 @@ func (s *Cursor) Echo(args ...string) *Cursor {
 	return s
 }
 
+// Print prints contents into buffer for [Cursor.Build].
 func (s *Cursor) Print(args ...any) *Cursor {
 	_, _ = fmt.Fprint(&s.sb, args...)
 	return s
 }
 
+// Println prints contents into buffer for [Cursor.Build].
 func (s *Cursor) Println(args ...any) *Cursor {
 	_, _ = fmt.Fprint(&s.sb, args...)
 	if atomic.CompareAndSwapInt32(&s.needReset, 1, 0) {
@@ -207,6 +214,7 @@ func (s *Cursor) Println(args ...any) *Cursor {
 	return s
 }
 
+// Printf prints formatted contents into buffer for [Cursor.Build].
 func (s *Cursor) Printf(format string, args ...any) *Cursor {
 	s.print(format, args...)
 	return s

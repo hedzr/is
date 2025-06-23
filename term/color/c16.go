@@ -19,6 +19,26 @@ func (s c16S) writecsicode() {
 	// // }
 }
 
+// Echo prints contents into buffer for [Cursor.Build].
+func (s c16S) Echo(args ...string) *Cursor {
+	s.cS.Echo(args...)
+	return s.cS
+}
+
+// Print prints contents into buffer for [Cursor.Build].
+func (s c16S) Print(args ...any) *Cursor {
+	s.cS.Print(args...)
+	return s.cS
+}
+
+// Println prints contents into buffer for [Cursor.Build].
+func (s c16S) Println(args ...any) *Cursor {
+	s.writecsicode()
+	s.cS.Println(args...)
+	return s.cS
+}
+
+// Printf prints contents into buffer for [Cursor.Build].
 func (s c16S) Printf(format string, args ...any) *Cursor {
 	s.writecsicode()
 
@@ -30,24 +50,8 @@ func (s c16S) Printf(format string, args ...any) *Cursor {
 	return s.cS.Printf(format, args...)
 }
 
-func (s c16S) Println(args ...any) *Cursor {
-	s.writecsicode()
-	s.cS.Println(args...)
-	return s.cS
-}
-
 func (s c16S) ResetColor() *Cursor {
 	s.cS.ResetColor()
-	return s.cS
-}
-
-func (s c16S) Echo(args ...string) *Cursor {
-	s.cS.Echo(args...)
-	return s.cS
-}
-
-func (s c16S) Print(args ...any) *Cursor {
-	s.cS.Print(args...)
 	return s.cS
 }
 
