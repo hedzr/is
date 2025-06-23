@@ -69,8 +69,8 @@ func main() {
 				// stopChan <- os.Interrupt
 				closer()
 			}()
+
 			<-ctx.Done() // waiting until any os signal caught
-			// wgDone.Done() // and complete myself
 
 			if atomic.CompareAndSwapInt32(&cancelled, 0, 1) {
 				is.PressAnyKeyToContinue(os.Stdin)
