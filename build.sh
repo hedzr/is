@@ -25,6 +25,20 @@ extract-app-version() {
 	VERSION="$(grep -E "version[ \t]+=[ \t]+" ${DEFAULT_DOC_NAME} | grep -Eo "[0-9.]+")"
 }
 
+build-main-platforms() {
+	local appname="${1:-colors}"
+	for GOOS in darwin linux windows freebsd openbsd netbsd plan9; do
+		local suffix=''
+		[[ "$GOOS" = "windows" ]] && suffix='.exe'
+		for GOARCH in amd64 arm64 riscv64 mips64; do
+			go tool dist list | grep -qE "$GOOS/$GOARCH" &&
+				tip "--- build for $GOOS/$GOARCH ---" &&
+				GOOS=$GOOS GOARCH=$GOARCH go build -o "./bin/${appname}-${GOOS}_${GOARCH}${suffix}" ./_examples/$appname/
+		done
+	done
+	ls -la $LS_OPT ./bin/colors*
+}
+
 build-all-platforms() {
 	local W_PKG=github.com/hedzr/cmdr/v2/conf
 	local TIMESTAMP="$(date -u '+%Y-%m-%dT%H:%M:%S')"
@@ -46,7 +60,6 @@ build-all-platforms() {
 		-X '${W_PKG}.Version=$VERSION' \
 		-X '${W_PKG}.AppName=$APPNAME'"
 	local CGO_ENABLED=0
-	local LS_OPT="-G"
 	local GOBIN="./bin" GOOS GOARCH
 	local mbp ma an
 
@@ -59,7 +72,8 @@ build-all-platforms() {
 						echo -e "\n\n" && tip "BUILDING FOR ${ANAME} / $GOOS ...\n"
 						if [ -d "$ANAME" ]; then
 							for GOARCH in $(go tool dist list | grep -E "^$GOOS" | awk -F'/' '{print $2}' | sort -u); do
-								SUFFIX="_${GOOS}-${GOARCH}"
+								SUFFIX="-${GOOS}_${GOARCH}"
+								[[ $GOOS = windows ]] && SUFFIX="${SUFFIX}.exe"
 								echo "  >> building ${ANAME} - ${GOARCH} ..."
 								go build -trimpath -gcflags=all='-l -B' \
 									"${GOBUILD_TAGS}" -ldflags "${LDFLAGS}" \
@@ -77,9 +91,16 @@ build-all-platforms() {
 }
 
 test-all-platforms() {
-	for GOOS in $(go tool dist list | awk -F'/' '{print $1}' | sort -u); do
-		echo -e "\n\nTESTING FOR $GOOS ...\n"
-		go test -v -race -coverprofile=coverage-$GOOS.txt -test.run=^TestDirTimestamps$ ./dir/ || exit
+	local func="${1:-}"
+	[ -d ./logs ] || mkdir -pv ./logs
+	# for GOOS in $(go tool dist list | awk -F'/' '{print $1}' | sort -u); do
+	for GOOS in darwin linux windows freebsd openbsd netbsd plan9; do
+		for GOARCH in amd64 arm64 riscv64 mips64; do
+			go tool dist list | grep -qE "$GOOS/$GOARCH" &&
+				echo && echo && tip "TESTING FOR $GOOS/$GOARCH ...\n" &&
+				go test ./... -v -race -cover -coverprofile=./logs/coverage-${GOOS}_${GOARCH}.txt \
+					-test.run=^TestDirTimestamps$ -covermode=atomic -test.short -vet=off 2>&1 || exit
+		done
 	done
 }
 
@@ -97,7 +118,8 @@ bf1() {
 	# Missed: posix
 	for GOOS in $(go tool dist list | awk -F'/' '{print $1}' | sort -u); do
 		echo -e "\n\nTESTING FOR $GOOS ...\n"
-		go test -v -race -coverprofile=coverage-$GOOS.txt -test.run=^TestDirTimestamps$ ./dir/ || exit
+		go test -v -race -coverprofile=coverage-${GOOS}_${GOARCH}.txt \
+			-test.run=^TestDirTimestamps$ ./dir/ || exit
 	done
 }
 
@@ -120,7 +142,11 @@ all-ops() {
 	fmt && lint && cyclo
 }
 
+test-all() { test-all-platforms "$@"; }
+
 all() { build-all-platforms "$@"; }
+
+main() { build-main-platforms "$@"; }
 
 # if [[ $# -eq 0 ]]; then
 # 	cmd=cov
@@ -137,11 +163,20 @@ sleep() { tip "sleeping..."; }
 #       CD=$(cd `dirname "$0"`;pwd)
 # It will open a sub-shell to print the folder name of the running shell-script.
 
+is_darwin() { [[ $OSTYPE == darwin* ]]; }
+is_darwin_sillicon() { is_darwin && [[ $(uname_mach) == arm64 ]]; }
+is_linux() { [[ $OSTYPE == linux* ]]; }
+is_freebsd() { [[ $OSTYPE == freebsd* ]]; }
+is_win() { in_wsl; }
+in_wsl() { [[ "$(uname -r)" == *windows_standard* ]]; }
+
 dbg() { ((DEBUG)) && printf ">>> \e[0;38;2;133;133;133m$@\e[0m\n" || :; }
 tip() { printf "\e[0;38;2;133;133;133m>>> $@\e[0m\n"; }
 err() { printf "\e[0;33;1;133;133;133m>>> $@\e[0m\n" 1>&2; }
 fn_exists() { LC_ALL=C type $1 2>/dev/null | grep -qE '(shell function)|(a function)'; }
 CD="$(cd $(dirname "$0") && pwd)" && BASH_SH_VERSION=v20241021 && DEBUG=${DEBUG:-0} && PROVISIONING=${PROVISIONING:-0}
+LS_OPT="--color"
+is_darwin && LS_OPT="-G"
 (($#)) && {
 	dbg "$# arg(s) | CD = $CD"
 	check_entry() {
