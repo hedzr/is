@@ -64,8 +64,20 @@ func (s *Cursor) AUXPortOn() csiS                 { return s.pCSI('i', 5) }    /
 func (s *Cursor) AUXPortOff() csiS                { return s.pCSI('i', 4) }    // AUX Port Off
 func (s *Cursor) DSR() csiS                       { return s.pCSI('n', 6) }    // Device Status Report
 
-func (s *Cursor) CursorSavePos() csiS    { return s.pCSI('s') } // Save Current Cursor Position
-func (s *Cursor) CursorRestorePos() csiS { return s.pCSI('u') } // Restore Current Cursor Position
+
+func (s *Cursor) CursorGet(ctx context.Context, pos *CursorPos) *Cursor {
+	if pos != nil {
+		var stdoutHandle uintptr = uintptr(syscall.Handle(os.Stdout.Fd()))
+		consoleInfo, err := getConsoleScreenBufferInfo(stdoutHandle)
+		if err != nil {
+			slog.Error("CursorGet() [windows] getConsoleScreenBufferInfo failed", "err", err)
+			return s
+		}
+		pos.Row = int(consoleInfo.CursorPosition.Y)
+		pos.Col = int(consoleInfo.CursorPosition.X)
+	}
+	return s
+}
 
 type (
 	SHORT int16

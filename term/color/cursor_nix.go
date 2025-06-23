@@ -31,8 +31,31 @@ func (s *Cursor) AUXPortOn() csiS                 { return s.CSI('i', 5) }    //
 func (s *Cursor) AUXPortOff() csiS                { return s.CSI('i', 4) }    // AUX Port Off
 func (s *Cursor) DSR() csiS                       { return s.CSI('n', 6) }    // Device Status Report
 
-func (s *Cursor) CursorSavePos() csiS    { return s.CSI('s') } // Save Current Cursor Position
-func (s *Cursor) CursorRestorePos() csiS { return s.CSI('u') } // Restore Current Cursor Position
+
+// CursorGet try to get the current cursor position via ansi escaped sequences.
+//
+// Now it works ok for unix, linux, and darwin terminals.
+// For windows, it should work fine but no test.
+// For others terminals, such as plan9, it's not supported.
+func (s *Cursor) CursorGet(ctx context.Context, pos *CursorPos) (chain *Cursor) {
+	chain = s
+
+	var n int
+	_, _ = fmt.Fprint(os.Stdout, "\033[6n")
+	line, ok, err := chk.ReadTill(0, 'R') // read from stdin
+	if err != nil {
+		slog.Error("getCursorPosTo() readtill failed", "err", err, "n", n, "ok", ok)
+		return
+	}
+	// println("(got):", line[1:], ok, err)
+	if line[0] == '\x1b' && line[1] == '[' {
+		n, err = fmt.Sscanf(line[2:], "%d;%d", &pos.Row, &pos.Col)
+		if err != nil {
+			slog.Error("getCursorPosTo() sscanf failed", "err", err, "n", n)
+		}
+	}
+	return
+}
 
 func cursorUp(w Writer, n int) {
 	writecsiseq(w, 'A', n)
