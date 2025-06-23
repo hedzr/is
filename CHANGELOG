@@ -1,5 +1,21 @@
 # CHANGELOG & HISTORY
 
+- v0.8.35
+  - BREAK for `Cursor`
+    change `Up` to `UpNow`, and `CursorUp` to `Up`.
+    All XXNow methods send content to console right now,
+    and all XX methods put content into building buffer till Build()
+    making them as result string.
+  - improved `basics.Raise`
+  - added `basic.Openable`
+    - improved relevant codes (Catcher, cmdr)
+  - added `Cursor.CursorGet()`
+    via `chk.ReadTill()`
+  - added `chk.ReadTill()` to wait for a char from stdin
+  - move some funcs into `term/chk` subpackage, to avoid cycle import
+  - added prompt example app
+  - fix `isDebuggerAttached` compatibiliies for unsupported platforms
+
 - v0.8.31
   - nothing, just a stable release
 
