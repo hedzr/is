@@ -23,7 +23,7 @@ func ExampleNew() {
 	var result = c.Println().
 		Color16(color.FgRed).
 		Printf("hello, %s.", "world").Println().
-		SavePos().
+		SavePos(). // try using SavePosNow()
 		Println("x").
 		Color16(color.FgGreen).Printf("hello, %s.\n", "world").
 		Color256(160).Printf("[160] hello, %s.\n", "world").
@@ -32,12 +32,12 @@ func ExampleNew() {
 		Color256(163).Printf("[163] hello, %s.\n", "world").
 		Color256(164).Printf("[164] hello, %s.\n", "world").
 		Color256(165).Printf("[165] hello, %s.\n", "world").
-		Up(3).Echo(" ERASED ").
+		Up(3).Echo(" ERASED "). // try using UpNow()
 		RGB(211, 211, 33).Printf("[16m] hello, %s.", "world").
 		Println().
-		RestorePos().
+		RestorePos(). // try using RestorePosNow()
 		Println("z").
-		Down(8).
+		Down(8). // try using DownNow()
 		Println("DONE").
 		Build()
 
@@ -228,13 +228,13 @@ func ExampleCSICodes() {
 
 	// move cursor to new position
 
-	fmt.Printf("%s", color.New().SavePos().Build())
+	fmt.Printf("%s", color.New().SavePosNow().Build())
 
 	var cx color.CSICodes
 	cx.AddCode2(color.CSICursorPosition, 2, 3) // move cursor to row 2 col 3
 	fmt.Printf("%s", cx)
 
-	fmt.Printf("%s", color.New().RestorePos().Build())
+	fmt.Printf("%s", color.New().RestorePosNow().Build())
 
 	// Output:
 	// [7A[7B[s[2,3H[u

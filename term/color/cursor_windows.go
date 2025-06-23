@@ -7,7 +7,10 @@
 package color
 
 import (
+	"context"
 	"io"
+	"log/slog"
+	"os"
 	"syscall"
 	"unsafe"
 )
@@ -43,27 +46,30 @@ func (s *Cursor) pCSI(suffix byte, args ...int) csiS {
 	return s.CSI(suffix, args...)
 }
 
-func (s *Cursor) CursorUp(n int) csiS      { return s.pCSI('A', n) } // use color.Up() instead of this
-func (s *Cursor) CursorDown(n int) csiS    { return s.pCSI('B', n) } // use color.Down() instead of this
-func (s *Cursor) CursorForward(n int) csiS { return s.pCSI('C', n) } // use color.Right() instead of this
-func (s *Cursor) CursorBack(n int) csiS    { return s.pCSI('D', n) } // use color.Left() instead of this
+func (s *Cursor) Up(n int) csiS      { return s.pCSI('A', n) } // use color.Up() instead of this
+func (s *Cursor) Down(n int) csiS    { return s.pCSI('B', n) } // use color.Down() instead of this
+func (s *Cursor) Forward(n int) csiS { return s.pCSI('C', n) } // use color.Right() instead of this
+func (s *Cursor) Back(n int) csiS    { return s.pCSI('D', n) } // use color.Left() instead of this
 
-func (s *Cursor) CursorNextLine(n int) csiS     { return s.pCSI('E', n) }        // Moves cursor to beginning of the line n (default 1) lines down. (not ANSI.SYS)
-func (s *Cursor) CursorPrevLine(n int) csiS     { return s.pCSI('F', n) }        // Moves cursor to beginning of the line n (default 1) lines up. (not ANSI.SYS)
-func (s *Cursor) CursorHorzCol(colAbs int) csiS { return s.pCSI('G', colAbs) }   // Moves the cursor to column n (default 1).
-func (s *Cursor) CursorPos(col, row int) csiS   { return s.pCSI('H', col, row) } //
-func (s *Cursor) CursorErase(n EraseTo) csiS    { return s.pCSI('J', int(n)) }   // Erase in Display
-func (s *Cursor) CursorEraseInLine(n int) csiS  { return s.pCSI('K', n) }        // Erase in Line
+func (s *Cursor) NextLine(n int) csiS      { return s.pCSI('E', n) }        // Moves cursor to beginning of the line n (default 1) lines down. (not ANSI.SYS)
+func (s *Cursor) PrevLine(n int) csiS      { return s.pCSI('F', n) }        // Moves cursor to beginning of the line n (default 1) lines up. (not ANSI.SYS)
+func (s *Cursor) HorzCol(colAbs int) csiS  { return s.pCSI('G', colAbs) }   // Moves the cursor to column n (default 1).
+func (s *Cursor) MoveTo(col, row int) csiS { return s.pCSI('H', col, row) } //
+func (s *Cursor) Erase(n EraseTo) csiS     { return s.pCSI('J', int(n)) }   // Erase in Display
+func (s *Cursor) EraseInLine(n int) csiS   { return s.pCSI('K', n) }        // Erase in Line
 
-func (s *Cursor) CursorScrollUp(n int) csiS   { return s.pCSI('S', n) } // use color.ScrollUp() instead of this
-func (s *Cursor) CursorScrollDown(n int) csiS { return s.pCSI('T', n) } // use color.ScrollDown() instead of this
+func (s *Cursor) ScrollUp(n int) csiS   { return s.pCSI('S', n) } // use color.ScrollUp() instead of this
+func (s *Cursor) ScrollDown(n int) csiS { return s.pCSI('T', n) } // use color.ScrollDown() instead of this
 
-func (s *Cursor) CursorHorzVertPos(n, m int) csiS { return s.pCSI('f', n, m) } // Horizontal Vertical Position
-func (s *Cursor) CursorSGR(n int) csiS            { return s.pCSI('m', n) }    // Select Graphic Rendition
-func (s *Cursor) AUXPortOn() csiS                 { return s.pCSI('i', 5) }    // AUX Port On
-func (s *Cursor) AUXPortOff() csiS                { return s.pCSI('i', 4) }    // AUX Port Off
-func (s *Cursor) DSR() csiS                       { return s.pCSI('n', 6) }    // Device Status Report
+func (s *Cursor) HorzVertPos(n, m int) csiS { return s.pCSI('f', n, m) } // Horizontal Vertical Position
 
+func (s *Cursor) SGR(n int) csiS   { return s.pCSI('m', n) } // Select Graphic Rendition
+func (s *Cursor) AUXPortOn() csiS  { return s.pCSI('i', 5) } // AUX Port On
+func (s *Cursor) AUXPortOff() csiS { return s.pCSI('i', 4) } // AUX Port Off
+func (s *Cursor) DSR() csiS        { return s.pCSI('n', 6) } // Device Status Report
+
+func (s *Cursor) SavePos() csiS    { return s.pCSI('s') } // Save Current Cursor Position
+func (s *Cursor) RestorePos() csiS { return s.pCSI('u') } // Restore Current Cursor Position
 
 func (s *Cursor) CursorGet(ctx context.Context, pos *CursorPos) *Cursor {
 	if pos != nil {

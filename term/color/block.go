@@ -51,7 +51,7 @@ func (s *RowsBlock) Clear() {
 		s.Home()
 	} else {
 		s.Home()
-		s.cursor.EraseLine()
+		s.cursor.EraseLineNow()
 	}
 }
 
@@ -81,7 +81,7 @@ func (s *RowsBlock) Up(n int) {
 			n = s.height - s.cursorPosY
 		}
 
-		s.cursor.Up(n)
+		s.cursor.UpNow(n)
 		s.cursorPosY += n
 	}
 }
@@ -93,7 +93,7 @@ func (s *RowsBlock) Down(n int) {
 			n = s.height - s.cursorPosY
 		}
 
-		s.cursor.Down(n)
+		s.cursor.DownNow(n)
 		s.cursorPosY -= n
 	}
 }
@@ -120,7 +120,7 @@ func (s *RowsBlock) Top() {
 
 // Home moves the cursor to the start of the current line.
 func (s *RowsBlock) Home() {
-	s.cursor.HorizontalAbsolute(0)
+	s.cursor.HorizontalAbsoluteNow(0)
 }
 
 // HomeAndLineDown moves the cursor down by n lines,
@@ -141,22 +141,22 @@ func (s *RowsBlock) HomeAndLineUp(n int) {
 // clears the line.
 func (s *RowsBlock) UpAndClear(n int) {
 	s.Up(n)
-	s.cursor.EraseLine()
+	s.cursor.EraseLineNow()
 }
 
 // DownAndClear moves the cursor down by n lines, then
 // clears the line.
 func (s *RowsBlock) DownAndClear(n int) {
 	s.Down(n)
-	s.cursor.EraseLine()
+	s.cursor.EraseLineNow()
 }
 
 // Move moves the cursor relative by x and y.
 func (s *RowsBlock) Move(x, y int) {
 	if x > 0 {
-		s.cursor.Right(x)
+		s.cursor.RightNow(x)
 	} else if x < 0 {
-		s.cursor.Left(-x)
+		s.cursor.LeftNow(-x)
 	}
 
 	if y > 0 {
@@ -170,7 +170,7 @@ func (s *RowsBlock) Move(x, y int) {
 // position and moves the cursor.
 func (s *RowsBlock) ClearLinesUp(n int) {
 	s.Home()
-	s.cursor.EraseLine()
+	s.cursor.EraseLineNow()
 
 	for range n {
 		s.UpAndClear(1)
@@ -181,7 +181,7 @@ func (s *RowsBlock) ClearLinesUp(n int) {
 // current position and moves the cursor.
 func (s *RowsBlock) ClearLinesDown(n int) {
 	s.Home()
-	s.cursor.EraseLine()
+	s.cursor.EraseLineNow()
 
 	for i := 0; i < n; i++ {
 		s.DownAndClear(1)
