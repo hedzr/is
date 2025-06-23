@@ -1,5 +1,7 @@
 package basics
 
+import "context"
+
 type (
 	// Peripheral represents a basic infrastructure which can
 	// be initialized and destroyed.
@@ -27,6 +29,12 @@ type (
 	// see AddPeripheral.
 	AutoStart interface {
 		AutoStart()
+	}
+
+	// Openable Peripheral can be initialized at a proper time when
+	// main controller (like cmdr, Catcher, ...) starting up.
+	Openable interface {
+		Open(ctx context.Context) (err error)
 	}
 )
 
