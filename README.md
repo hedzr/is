@@ -56,7 +56,7 @@ import (
 )
 
 func main() {
-    defer basics.Close()
+    // defer basics.Close() // uncomment if not using Catcher.WaitFor and/or cmdr.v2
 
     is.RegisterStateGetter("custom", func() bool { return is.InVscodeTerminal() })
 
@@ -439,6 +439,33 @@ func ExampleCursor_StripLeftTabsColorful() {
 
 </detail></details>
 
+### `color` subpackage
+
+Package color provides a wrapped standard output device like printf but with colored enhancements.
+
+The main types are [Cursor](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#Cursor) and [Translator](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#Translator).
+
+[Cursor](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#Cursor) allows formatting colorful text and moving cursor to another coordinate.
+
+[New](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#New) will return a [Cursor](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#Cursor) object.
+
+[RowsBlock](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#RowsBlock) is another cursor controller, which can treat the current line and following lines as a block and updating these lines repeatedly. This feature will help the progressbar writers or the continuous lines updater.
+
+[Translator](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#Translator) is a text and tiny HTML tags translator to convert these markup text into colorful console text sequences. [GetCPT](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#GetCPT) can return a smart translator which translate colorful text or strip the ansi escaped sequence from result text if `states.Env().IsNoColorMode()` is true.
+
+[Color](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#Color) is an interface type to represent a terminal color object, which can be serialized to ansi escaped sequence directly by [Color.Color].
+
+To create a [Color](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#Color) object, there are several ways:
+
+- by [NewColor16](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#NewColor16), or use [Color16](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#Color16) constants directly like [FgBlack](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#FgBlack), [BgGreen](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#BgGreen), ...
+- by [NewColor256](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#NewColor256) to make a 8-bit 256-colors object
+- by [NewColor16m](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#NewColor16m) to make a true-color object
+- by [NewControlCode](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#NewControlCode) or [ControlCode](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#ControlCode) constants
+- by [NewFeCode](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#NewFeCode) or [FeCode](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#FeCode) constants
+- by [NewSGR](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#NewSGR) or use [CSIsgr](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#CSIsgr) constants directly like [SGRdim](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#SGRdim), [SGRstrike](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#SGRstrike), ...
+- by [NewStyle](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#NewStyle) to make a compounded object
+- ...
+
 ## Integrated with `cmdr`
 
 ### `Closers`
@@ -545,8 +572,6 @@ func runClient(ctx context.Context, ss net.Server, l stdnet.Listener) {
     c.RunDemo(ctx)
 }
 ```
-
-> some packages has stayed in progress so the above codes is just a skeleton (from go-socketlib/_examples/new-loop/main.go/v1).
 
 ## Contributions
 
