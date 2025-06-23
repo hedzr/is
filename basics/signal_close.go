@@ -239,13 +239,8 @@ func (s *catsig) WithOnLoopFunc(cb ...OnLooperFunc) Catcher {
 func (s *catsig) WithPeripherals(peripherals ...Peripheral) Catcher {
 	for _, peripheral := range peripherals {
 		RegisterPeripheral(peripheral)
-		if p, ok := peripheral.(interface {
-			Open(ctx context.Context) error
-		}); ok {
-			s.openPeripherals = append(s.openPeripherals, func(ctx context.Context) (err error) {
-				err = p.Open(ctx)
-				return
-			})
+		if p, ok := peripheral.(Openable); ok {
+			s.openPeripherals = append(s.openPeripherals, p.Open)
 		}
 	}
 	return s
