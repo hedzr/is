@@ -161,6 +161,7 @@ func (s signalS) Catch(sig ...os.Signal) basics.Catcher {
 //
 // To raise an OS signal is not support on Windows.
 func (s signalS) Raise(sig syscall.Signal) error {
+	// TODO cannot work on compiling for plan9
 	return basics.Raise(sig)
 }
 
