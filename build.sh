@@ -20,23 +20,68 @@ APPS=(small)
 # LDFLAGS = -s -w -X 'github.com/hedzr/cmdr/v2/conf.Buildstamp=2024-10-25T18:09:06+08:00' -X 'github.com/hedzr/cmdr/v2/conf.GIT_HASH=580ca50' -X 'github.com/hedzr/cmdr/v2/conf.GitSummary=580ca50-dirty' -X 'github.com/hedzr/cmdr/v2/conf.GitDesc=580ca50 upgrade deps' -X 'github.com/hedzr/cmdr/v2/conf.BuilderComments=' -X 'github.com/hedzr/cmdr/v2/conf.GoVersion=go version go1.23.7 darwin/arm64' -X 'github.com/hedzr/cmdr/v2/conf.Version=0.5.1'
 
 extract-app-version() {
-	local DEFAULT_DOC_NAME="${DEFAULT_DOC_NAME:-${1:-slog/doc.go}}"
-	APPNAME="$(grep -E "appName[ \t]+=[ \t]+" ${DEFAULT_DOC_NAME} | grep -Eo "\\\".+\\\"")"
-	VERSION="$(grep -E "version[ \t]+=[ \t]+" ${DEFAULT_DOC_NAME} | grep -Eo "[0-9.]+")"
+	local ok=0
+	local DEFAULT_DOC_NAME="${DEFAULT_DOC_NAME}"
+	for dn in "${DEFAULT_DOC_NAME}" \
+		slog/doc.go _examples/small/doc.go examples/small/doc.go \
+		cli/cmdr-cli/consts/def.go cli/cmdr/consts/def.go cli/cmdr-cli/doc.go cli/cmdr/doc.go \
+		"${1:-doc.go}"; do
+		if [[ $ok -eq 0 ]]; then
+			local docfn="${dn}"
+			if [ -f "$docfn" ]; then
+				dbg "checking ${docfn}..."
+				APPNAME="$(grep -E "appName[ \t]+=[ \t]+" ${docfn} | grep -Eo "\\\".+\\\"")"
+				VERSION="$(grep -E "version[ \t]+=[ \t]+" ${docfn} | grep -Eo "[0-9.]+")"
+				if [[ "$APPNAME" != "" && "$VERSION" != "" ]]; then
+					# $ foo=${string#"$prefix"}
+					# $ foo=${foo%"$suffix"}
+					VERSION="v${VERSION#v}"
+					let ok++
+				fi
+			fi
+		fi
+	done
+	if [[ $ok -eq 0 ]]; then
+		false
+	fi
+}
+
+publish() {
+	extract-app-version
+	local version="$VERSION"
+	tip "version extracted: $version"
+	if is_git_dirty; then
+		err ".git repo is NOT clean, cannot publish right now"
+	elif [ ! "$version" = v1.* ]; then
+		err "BAD version ($version) extracted, cannot publish right now"
+	else
+		git tag $version
+		git push origin --all && git push origin --tags
+		# sleep 5
+		# git tag lite/$version
+		# git push origin --all && git push origin --tags
+	fi
 }
 
 build-main-platforms() {
 	local appname="${1:-colors}"
+	local binname="${1:-colors}"
+	(($#)) && shift
+
+	extract-app-version
+	local version="$VERSION"
+
 	for GOOS in darwin linux windows freebsd openbsd netbsd plan9; do
 		local suffix=''
 		[[ "$GOOS" = "windows" ]] && suffix='.exe'
 		for GOARCH in amd64 arm64 riscv64 mips64; do
 			go tool dist list | grep -qE "$GOOS/$GOARCH" &&
 				tip "--- build for $GOOS/$GOARCH ---" &&
-				GOOS=$GOOS GOARCH=$GOARCH go build -o "./bin/${appname}-${GOOS}_${GOARCH}${suffix}" ./_examples/$appname/
+				GOOS=$GOOS GOARCH=$GOARCH go build "$@" -o "./bin/${binname}-${version}-${GOOS}_${GOARCH}${suffix}" \
+					./${MAIN_APPS[0]}/$appname #./_examples/$appname/
 		done
 	done
-	ls -la $LS_OPT ./bin/colors*
+	ls -la $LS_OPT ./bin/${binname}*
 }
 
 build-all-platforms() {
@@ -148,6 +193,12 @@ all() { build-all-platforms "$@"; }
 
 main() { build-main-platforms "$@"; }
 
+mk-ver() {
+	if extract-app-version "$@"; then
+		echo "version info extracted: APPNAME=$APPNAME, VERSION=$VERSION"
+	fi
+}
+
 # if [[ $# -eq 0 ]]; then
 # 	cmd=cov
 # else
@@ -155,7 +206,7 @@ main() { build-main-platforms "$@"; }
 # fi
 # $cmd "$@"
 
-sleep() { tip "sleeping..."; }
+sleep() { tip "sleeping..." && (($#)) && \sleep "$@"; }
 
 ######### SIMPLE BASH.SH FOOTER BEGIN #########
 
@@ -169,6 +220,15 @@ is_linux() { [[ $OSTYPE == linux* ]]; }
 is_freebsd() { [[ $OSTYPE == freebsd* ]]; }
 is_win() { in_wsl; }
 in_wsl() { [[ "$(uname -r)" == *windows_standard* ]]; }
+
+is_git_clean() { git diff-index --quiet "$@" HEAD -- 2>/dev/null; }
+is_git_dirty() {
+	if is_git_clean "$@"; then
+		false
+	else
+		true
+	fi
+}
 
 dbg() { ((DEBUG)) && printf ">>> \e[0;38;2;133;133;133m$@\e[0m\n" || :; }
 tip() { printf "\e[0;38;2;133;133;133m>>> $@\e[0m\n"; }
