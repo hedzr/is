@@ -142,8 +142,10 @@ func stripHtmlTags(s string) string {
 			continue
 		}
 		// else c == htmlTagEnd
-		in = false
-		end = i + 1
+		if in {
+			in = false
+			end = i + 1
+		}
 	}
 	s = builder.String()
 	return s

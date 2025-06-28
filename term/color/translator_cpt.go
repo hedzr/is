@@ -267,8 +267,10 @@ func (c *cpTranslator) stripHTMLTags(s string) string {
 			continue
 		}
 		// else c == htmlTagEnd
-		in = false
-		end = i + 1
+		if in {
+			in = false
+			end = i + 1
+		}
 	}
 	str := builder.String()
 	return str
