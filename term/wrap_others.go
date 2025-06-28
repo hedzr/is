@@ -2,7 +2,11 @@
 
 package term
 
-import "os"
+import (
+	"errors"
+	"os"
+	"syscall"
+)
 
 // GetTtySize returns the window size in columns and rows in the active console window.
 // The return value of this function is in the order of cols, rows.
@@ -19,3 +23,10 @@ func GetTtySizeByFd(fd uintptr) (cols, rows int, err error)      { return GetFdS
 func getTtySize(fn string) (cols, rows int, err error)        { return }
 func getDeviceSize(outf *os.File) (cols, rows int, err error) { return }
 func getFdSize(fd uintptr) (cols, rows int, err error)        { return }
+
+func errIsENOTTY(err error) bool {
+	if errors.Is(err, syscall.ENOTTY) {
+		return true
+	}
+	return false
+}

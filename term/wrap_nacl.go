@@ -31,3 +31,10 @@ func GetTtySize() (cols, rows int) {
 }
 
 func isDoubleClickRun() bool { return false }
+
+func errIsENOTTY(err error) bool {
+	if errors.Is(err, syscall.ENOTTY) {
+		return true
+	}
+	return false
+}

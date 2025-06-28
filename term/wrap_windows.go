@@ -6,6 +6,7 @@
 package term
 
 import (
+	"errors"
 	"os"
 	"syscall"
 	"unsafe"
@@ -84,4 +85,11 @@ func isDoubleClickRun() bool {
 		}
 	}
 	return true
+}
+
+func errIsENOTTY(err error) bool {
+	if errors.Is(err, syscall.ENOTTY) {
+		return true
+	}
+	return false
 }

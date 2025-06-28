@@ -18,12 +18,10 @@ package term
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"sync"
-	"syscall"
 
 	"github.com/hedzr/is/basics"
 	"golang.org/x/term"
@@ -61,9 +59,12 @@ func MakeRawWrapped() (deferFunc func(), err error) {
 	var oldState *term.State
 	oldState, err = term.MakeRaw(0)
 	if err != nil {
-		if !errors.Is(err, syscall.ENOTTY) {
+		if !errIsENOTTY(err) {
 			return func() {}, err
 		}
+		// if !errors.Is(err, syscall.ENOTTY) {
+		// 	return func() {}, err
+		// }
 	}
 	deferFunc = func() {
 		if e := recover(); e != nil {

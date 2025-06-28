@@ -24,3 +24,5 @@ func isDoubleClickRun() bool { return false }
 func getTtySize(fn string) (cols, rows int, err error)        { return }
 func getDeviceSize(outf *os.File) (cols, rows int, err error) { return }
 func getFdSize(fd uintptr) (cols, rows int, err error)        { return }
+
+func errIsENOTTY(error) bool { return false }
