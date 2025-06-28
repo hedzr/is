@@ -70,6 +70,7 @@ func IsRegularFile(filePath string) (bool, error) {
 }
 
 func timeSpecToTime(ts syscall.Timespec) time.Time {
+	// TODO ts.Sec is not ok for plan9
 	return time.Unix(ts.Sec, ts.Nsec)
 }
 
