@@ -1,11 +1,10 @@
-//go:build !windows && !plan9
-// +build !windows,!plan9
+//go:build plan9
+// +build plan9
 
 package dir
 
 import (
 	"os"
-	"syscall"
 )
 
 // IsSameVolume detects if two files are in same volume (Unix like)
@@ -29,5 +28,5 @@ func IsSameVolume(f1, f2 string) bool {
 	// fmt.Println(stat1.Sys().(*syscall.Stat_t).Dev)
 	// fmt.Println(stat2.Sys().(*syscall.Stat_t).Dev)
 
-	return stat1.Sys().(*syscall.Stat_t).Dev == stat2.Sys().(*syscall.Stat_t).Dev
+	return stat1.Sys() == stat2.Sys() // .(*syscall.fileStat)
 }
