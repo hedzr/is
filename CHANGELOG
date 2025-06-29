@@ -1,5 +1,15 @@
 # CHANGELOG & HISTORY
 
+- v0.8.37
+  - fix cross building
+    - fix `IsSameVolume` for plan9
+    - fix `timeSpecToTime` for openbsd, but plan9 needs todo
+    - fix for `GetTtySizeByName`, `GetTtySizeByFile`, ...
+    - fix for `syscall.ENOTTY` - for cross compiling
+  - fix `stripHtmlTags`
+  - fix states onchanged events trigger
+  - update `build.sh`
+
 - v0.8.35
   - BREAK for `Cursor`
     change `Up` to `UpNow`, and `CursorUp` to `Up`.
