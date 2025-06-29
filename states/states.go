@@ -86,7 +86,7 @@ func (e *minimalEnv) triggerDebugChanged() {
 }
 
 func (e *minimalEnv) triggerTraceChanged() {
-	for _, cb := range e.debugChanged {
+	for _, cb := range e.traceChanged {
 		if cb != nil {
 			cb(e.traceMode, e.traceLevel)
 		}
@@ -94,7 +94,7 @@ func (e *minimalEnv) triggerTraceChanged() {
 }
 
 func (e *minimalEnv) triggerNoColorChanged() {
-	for _, cb := range e.debugChanged {
+	for _, cb := range e.noColorChanged {
 		if cb != nil {
 			cb(e.noColorMode, e.noColorCount)
 		}
@@ -102,7 +102,7 @@ func (e *minimalEnv) triggerNoColorChanged() {
 }
 
 func (e *minimalEnv) triggerVerboseChanged() {
-	for _, cb := range e.debugChanged {
+	for _, cb := range e.verboseChanged {
 		if cb != nil {
 			cb(e.verboseMode, e.verboseCount)
 		}
