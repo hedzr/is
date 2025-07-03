@@ -2,6 +2,7 @@ package is
 
 import (
 	"os"
+	"reflect"
 	"runtime"
 	"strings"
 	"sync"
@@ -11,6 +12,18 @@ import (
 	"github.com/hedzr/is/states/isdelve"
 	"github.com/hedzr/is/states/trace"
 )
+
+// InDevMode return the devmode state.
+//
+// For cmdr app, devmode means a '.devmode' file is detected
+// at work-dir. You could touch a '.devmode' file in your
+// app's src-tree folder to enable this state automatically.
+//
+// Detecting devmode file and state is invoked at app starting up.
+// If you wanna disable it, using build tag '-tags="nodetectdevmode"'.
+// If you have disabled it but still want it to be invoked manually,
+// try [states.DetectDevModeFile] or do it youself.
+func InDevMode() bool { return states.Env().InDevMode() }
 
 // InDebugging and DebuggerAttached returns status if golang debugger 'dlv' is attached.
 //
@@ -232,6 +245,24 @@ func GetNoColorLevel() int     { return Env().CountOfNoColor() } // returns no-c
 func SetNoColorMode(b bool)    { Env().SetNoColorMode(b) }       // sets no-color state
 func SetNoColorLevel(hits int) { Env().SetNoColorCount(hits) }   // setd no-color level
 
+// DevMode return the devmode state.
+//
+// For cmdr app, devmode means a '.devmode' file is detected
+// at work-dir. You could touch a '.devmode' file in your
+// app's src-tree folder to enable this state automatically.
+//
+// Detecting devmode file and state is invoked at app starting up.
+// If you wanna disable it, using build tag '-tags="nodetectdevmode"'.
+// If you have disabled it but still want it to be invoked manually,
+// try [states.DetectDevModeFile] or do it youself.
+func DevMode() bool     { return Env().InDevMode() }
+func SetDevMode(b bool) { Env().SetDevMode(b) } // set devMode state
+
+// DevModeFilePresent returns a state to identify ".devmode" (or ".dev-mode")
+// file is detected. This state relyes on once [states.DetectDevModeFile]
+// was invoked.
+func DevModeFilePresent() bool { return Env().IsDevModeFilePresent() }
+
 func DebugMode() bool        { return Env().GetDebugMode() }  // is debug build, or is CLI debug mode enabled (by `--debug`)?
 func GetDebugLevel() int     { return Env().GetDebugLevel() } // for debug build, return the debug level integer, 0-9
 func SetDebugMode(b bool)    { Env().SetDebugMode(b) }        // sets debug state
@@ -243,6 +274,7 @@ func GetTraceLevel() int     { return Env().GetTraceLevel() } // return the trac
 func SetTraceMode(b bool)    { Env().SetTraceMode(b) }        // sets trace state
 func SetTraceLevel(hits int) { Env().SetTraceLevel(hits) }    // sets trace level
 
+func SetOnDeeModeChanged(funcs ...states.OnChanged) { Env().SetOnDevModeChanged(funcs...) } // sets ondebugchanged callbacks
 func SetOnDebugChanged(funcs ...states.OnChanged)   { Env().SetOnDebugChanged(funcs...) }   // sets ondebugchanged callbacks
 func SetOnTraceChanged(funcs ...states.OnChanged)   { Env().SetOnTraceChanged(funcs...) }   // sets ontracechanged callbacks
 func SetOnVerboseChanged(funcs ...states.OnChanged) { Env().SetOnVerboseChanged(funcs...) } // sets onverbosechanged callbacks
@@ -317,3 +349,13 @@ var (
 	mstates     map[string]func() bool
 	oncemstates sync.Once
 )
+
+// FuncPtrSame compares two functors if they are same, with an unofficial way.
+func FuncPtrSame[T any](fn1, fn2 T) bool {
+	sf1 := reflect.ValueOf(fn1)
+	sf2 := reflect.ValueOf(fn2)
+	if sf1.Kind() != reflect.Func || sf2.Kind() != reflect.Func {
+		return false
+	}
+	return sf1.Pointer() == sf2.Pointer()
+}

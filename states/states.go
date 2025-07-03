@@ -11,6 +11,10 @@ import (
 
 // CmdrMinimal provides the accessors to debug/trace flags
 type CmdrMinimal interface {
+	InDevMode() bool            // .devmode file existed? or devMode enabled?
+	SetDevMode(devMode bool)    // set devMode manually
+	IsDevModeFilePresent() bool // .devmode file existed and detected?
+
 	InDebugging() bool      // is debug build
 	GetDebugMode() bool     // is debug build or the debug-mode flag is true, settable by `--debug`
 	SetDebugMode(b bool)    //
@@ -38,12 +42,14 @@ type CmdrMinimal interface {
 	CountOfQuiet() int      //
 	SetQuietCount(hits int) //
 
+	SetOnDevModeChanged(funcs ...OnChanged)
 	SetOnDebugChanged(funcs ...OnChanged)
 	SetOnTraceChanged(funcs ...OnChanged)
 	SetOnNoColorChanged(funcs ...OnChanged)
 	SetOnVerboseChanged(funcs ...OnChanged)
 	SetOnQuietChanged(funcs ...OnChanged)
 
+	RemovcOnDevModeChanged(funcs ...OnChanged)
 	RemovcOnDebugChanged(funcs ...OnChanged)
 	RemoveOnTraceChanged(funcs ...OnChanged)
 	RemoveOnNoColorChanged(funcs ...OnChanged)
@@ -58,24 +64,35 @@ var env CmdrMinimal = &minimalEnv{}
 
 // minimalEnv structure holds the debug/trace flags and provides CmdrMinimal accessors
 type minimalEnv struct {
-	debugMode      bool
-	debugLevel     int
-	traceMode      bool
-	traceLevel     int
-	noColorMode    bool
-	noColorCount   int
-	verboseMode    bool
-	verboseCount   int
-	quietMode      bool
-	quietCount     int
-	traceChanged   []OnChanged
-	debugChanged   []OnChanged
-	verboseChanged []OnChanged
-	quietChanged   []OnChanged
-	noColorChanged []OnChanged
+	debugMode          bool
+	debugLevel         int
+	traceMode          bool
+	traceLevel         int
+	noColorMode        bool
+	noColorCount       int
+	verboseMode        bool
+	verboseCount       int
+	quietMode          bool
+	quietCount         int
+	devMode            bool
+	devModeFilePresent bool
+	traceChanged       []OnChanged
+	debugChanged       []OnChanged
+	verboseChanged     []OnChanged
+	quietChanged       []OnChanged
+	noColorChanged     []OnChanged
+	devModeChanged     []OnChanged
 }
 
 type OnChanged func(mod bool, level int)
+
+func (e *minimalEnv) triggerDevModeChanged() {
+	for _, cb := range e.devModeChanged {
+		if cb != nil {
+			cb(e.devMode, 1)
+		}
+	}
+}
 
 func (e *minimalEnv) triggerDebugChanged() {
 	for _, cb := range e.debugChanged {
@@ -117,6 +134,10 @@ func (e *minimalEnv) triggerQuietChanged() {
 	}
 }
 
+func (e *minimalEnv) SetOnDevModeChanged(funcs ...OnChanged) {
+	e.debugChanged = append(e.devModeChanged, funcs...)
+}
+
 func (e *minimalEnv) SetOnDebugChanged(funcs ...OnChanged) {
 	e.debugChanged = append(e.debugChanged, funcs...)
 }
@@ -135,6 +156,10 @@ func (e *minimalEnv) SetOnVerboseChanged(funcs ...OnChanged) {
 
 func (e *minimalEnv) SetOnQuietChanged(funcs ...OnChanged) {
 	e.quietChanged = append(e.quietChanged, funcs...)
+}
+
+func (e *minimalEnv) RemovcOnDevModeChanged(funcs ...OnChanged) {
+	e.debugChanged = e.removeHelper(e.devModeChanged, funcs...)
 }
 
 func (e *minimalEnv) RemovcOnDebugChanged(funcs ...OnChanged) {
@@ -178,6 +203,15 @@ func fnUniName(f OnChanged) string {
 	return runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 }
 
+func (e *minimalEnv) InDevMode() bool { return e.devMode }
+func (e *minimalEnv) SetDevMode(devMode bool) {
+	if save := e.devMode; save != devMode {
+		e.devMode = devMode
+		e.triggerDevModeChanged()
+	}
+}
+func (e *minimalEnv) IsDevModeFilePresent() bool { return e.devModeFilePresent }
+
 // InDebugging check if the delve debugger presents.
 func (e *minimalEnv) InDebugging() bool { return isdelve.Enabled }
 
@@ -185,30 +219,83 @@ func (e *minimalEnv) InDebugging() bool { return isdelve.Enabled }
 func (e *minimalEnv) GetDebugMode() bool { return e.debugMode || isdelve.Enabled }
 
 // SetDebugMode set the debug boolean flag generally.
-func (e *minimalEnv) SetDebugMode(b bool)    { e.debugMode = b; e.triggerDebugChanged() }
-func (e *minimalEnv) GetDebugLevel() int     { return e.debugLevel }
-func (e *minimalEnv) SetDebugLevel(hits int) { e.debugLevel = hits; e.triggerDebugChanged() }
+func (e *minimalEnv) SetDebugMode(b bool) {
+	if save := e.debugMode; save != b {
+		e.debugMode = b
+		e.triggerDebugChanged()
+	}
+}
+func (e *minimalEnv) GetDebugLevel() int { return e.debugLevel }
+func (e *minimalEnv) SetDebugLevel(hits int) {
+	if save := e.debugLevel; save != hits {
+		e.debugLevel = hits
+		e.triggerDebugChanged()
+	}
+}
 
 // GetTraceMode return the trace boolean flag generally.
 func (e *minimalEnv) GetTraceMode() bool { return e.traceMode || trace.IsEnabled() }
 
 // SetTraceMode set the trace boolean flag generally.
-func (e *minimalEnv) SetTraceMode(b bool)    { e.traceMode = b; e.triggerTraceChanged() }
-func (e *minimalEnv) GetTraceLevel() int     { return e.traceLevel }
-func (e *minimalEnv) SetTraceLevel(hits int) { e.traceLevel = hits; e.triggerTraceChanged() }
+func (e *minimalEnv) SetTraceMode(b bool) {
+	if save := e.traceMode; save != b {
+		e.traceMode = b
+		e.triggerTraceChanged()
+	}
+}
+func (e *minimalEnv) GetTraceLevel() int { return e.traceLevel }
+func (e *minimalEnv) SetTraceLevel(hits int) {
+	if save := e.traceLevel; save != hits {
+		e.traceLevel = hits
+		e.triggerTraceChanged()
+	}
+}
 
-func (e *minimalEnv) IsNoColorMode() bool      { return e.noColorMode }
-func (e *minimalEnv) SetNoColorMode(b bool)    { e.noColorMode = b; e.triggerNoColorChanged() }
-func (e *minimalEnv) CountOfNoColor() int      { return e.noColorCount }
-func (e *minimalEnv) SetNoColorCount(hits int) { e.noColorCount = hits; e.triggerNoColorChanged() }
+func (e *minimalEnv) IsNoColorMode() bool { return e.noColorMode }
+func (e *minimalEnv) SetNoColorMode(b bool) {
+	if save := e.noColorMode; save != b {
+		e.noColorMode = b
+		e.triggerNoColorChanged()
+	}
+}
 
-func (e *minimalEnv) IsVerboseMode() bool      { return buildtags.VerboseEnabled || e.verboseMode }
-func (e *minimalEnv) IsVerboseModePure() bool  { return e.verboseMode }
-func (e *minimalEnv) SetVerboseMode(b bool)    { e.verboseMode = b; e.triggerVerboseChanged() }
-func (e *minimalEnv) CountOfVerbose() int      { return e.verboseCount }
-func (e *minimalEnv) SetVerboseCount(hits int) { e.verboseCount = hits; e.triggerVerboseChanged() }
+func (e *minimalEnv) CountOfNoColor() int { return e.noColorCount }
+func (e *minimalEnv) SetNoColorCount(hits int) {
+	if save := e.noColorCount; save != hits {
+		e.noColorCount = hits
+		e.triggerNoColorChanged()
+	}
+}
 
-func (e *minimalEnv) IsQuietMode() bool      { return e.quietMode }
-func (e *minimalEnv) SetQuietMode(b bool)    { e.quietMode = b; e.triggerQuietChanged() }
-func (e *minimalEnv) CountOfQuiet() int      { return e.quietCount }
-func (e *minimalEnv) SetQuietCount(hits int) { e.quietCount = hits; e.triggerQuietChanged() }
+func (e *minimalEnv) IsVerboseMode() bool     { return buildtags.VerboseEnabled || e.verboseMode }
+func (e *minimalEnv) IsVerboseModePure() bool { return e.verboseMode }
+func (e *minimalEnv) SetVerboseMode(b bool) {
+	if save := e.verboseMode; save != b {
+		e.verboseMode = b
+		e.triggerVerboseChanged()
+	}
+}
+
+func (e *minimalEnv) CountOfVerbose() int { return e.verboseCount }
+func (e *minimalEnv) SetVerboseCount(hits int) {
+	if save := e.verboseCount; save != hits {
+		e.verboseCount = hits
+		e.triggerVerboseChanged()
+	}
+}
+
+func (e *minimalEnv) IsQuietMode() bool { return e.quietMode }
+func (e *minimalEnv) SetQuietMode(b bool) {
+	if save := e.quietMode; save != b {
+		e.quietMode = b
+		e.triggerQuietChanged()
+	}
+}
+
+func (e *minimalEnv) CountOfQuiet() int { return e.quietCount }
+func (e *minimalEnv) SetQuietCount(hits int) {
+	if save := e.quietCount; save != hits {
+		e.quietCount = hits
+		e.triggerQuietChanged()
+	}
+}
