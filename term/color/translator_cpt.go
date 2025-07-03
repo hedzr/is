@@ -246,7 +246,11 @@ func (c *cpTranslator) stripHTMLTags(s string) string {
 	for i, c := range s {
 		// If this is the last character and we are not in an HTML tag, save it.
 		if end >= start && (i+1) == len(s) {
-			_, _ = builder.WriteString(s[end:])
+			if in && c == htmlTagEnd {
+				// the end-tag is in recoganizing, nothing to done
+			} else {
+				_, _ = builder.WriteString(s[end:])
+			}
 		}
 
 		// Keep going if the character is not `<` or `>`
