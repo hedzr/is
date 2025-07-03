@@ -1,5 +1,11 @@
 # CHANGELOG & HISTORY
 
+- v0.8.38
+  - add `dev-mode` into `states.Env` & `MinimalEnv`
+    - `is.DevMode()`: enabled if `.devmode` file presented
+    - `states.Env().SetOnDevModeChanged(cb)` to handle the changed event by `SetDevMode(b)`
+  - fix `stripHtmlTags` for incorrect closetag branch
+
 - v0.8.37
   - fix cross building
     - fix `IsSameVolume` for plan9
