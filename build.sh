@@ -11,7 +11,7 @@ set -e
 
 MAIN_BUILD_PKG=(".")
 MAIN_APPS=(_examples)
-APPS=(small)
+APPS=(blocks colors color-tool prompt pipe small)
 
 # for an in ${APPS[*]}; do
 # 	echo "$an //"
@@ -57,13 +57,15 @@ publish() {
 	else
 		git tag $version
 		git push origin --all && git push origin --tags
-		# sleep 5
+		# sleepx 5
 		# git tag lite/$version
 		# git push origin --all && git push origin --tags
 	fi
 }
 
 build-main-platforms() {
+	local all=1
+	(($#)) && all=0
 	local appname="${1:-colors}"
 	local binname="${1:-colors}"
 	(($#)) && shift
@@ -75,10 +77,22 @@ build-main-platforms() {
 		local suffix=''
 		[[ "$GOOS" = "windows" ]] && suffix='.exe'
 		for GOARCH in amd64 arm64 riscv64 mips64; do
-			go tool dist list | grep -qE "$GOOS/$GOARCH" &&
-				tip "--- build for $GOOS/$GOARCH ---" &&
-				GOOS=$GOOS GOARCH=$GOARCH go build "$@" -o "./bin/${binname}-${version}-${GOOS}_${GOARCH}${suffix}" \
-					./${MAIN_APPS[0]}/$appname #./_examples/$appname/
+			if go tool dist list | grep -qE "$GOOS/$GOARCH"; then
+				if [ "$all" = "1" ]; then
+					for appname in ${APPS[@]}; do
+						binname="${appname}"
+						tip "--- build '$binname' for $GOOS/$GOARCH ---"
+						GOOS=$GOOS GOARCH=$GOARCH go build "$@" \
+							-o "./bin/${binname}-${version}-${GOOS}_${GOARCH}${suffix}" \
+							./${MAIN_APPS[0]}/$appname #./_examples/$appname/
+					done
+				else
+					tip "--- build for $GOOS/$GOARCH ---"
+					GOOS=$GOOS GOARCH=$GOARCH go build "$@" \
+						-o "./bin/${binname}-${version}-${GOOS}_${GOARCH}${suffix}" \
+						./${MAIN_APPS[0]}/$appname #./_examples/$appname/
+				fi
+			fi
 		done
 	done
 	ls -la $LS_OPT ./bin/${binname}*
@@ -206,7 +220,7 @@ mk-ver() {
 # fi
 # $cmd "$@"
 
-sleep() { tip "sleeping..." && (($#)) && \sleep "$@"; }
+sleepx() { tip "sleeping..." && (($#)) && \sleep "$@"; }
 
 ######### SIMPLE BASH.SH FOOTER BEGIN #########
 
