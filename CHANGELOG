@@ -1,5 +1,12 @@
 # CHANGELOG & HISTORY
 
+- v0.8.39
+  - added/exposed `term.IsENOTTY(err)`
+  - fixed/improved `signalS.Raise(sig)` for plan9
+    - improved `basics.Raise()`, added `basics.RaiseSyscallSignal(sig)`
+  - fix the usages of `syscall.Timespec` for bsd, and plan9
+  - improved main cmd and build all example apps for main supported platforms and archtectures
+
 - v0.8.38
   - add `dev-mode` into `states.Env` & `MinimalEnv`
     - `is.DevMode()`: enabled if `.devmode` file presented
