@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
-	"time"
 
 	"errors"
 
@@ -67,11 +66,6 @@ func IsRegularFile(filePath string) (bool, error) {
 		return false, err
 	}
 	return fileInfo.Mode().IsRegular(), err
-}
-
-func timeSpecToTime(ts syscall.Timespec) time.Time {
-	// TODO ts.Sec is not ok for plan9
-	return time.Unix(ts.Sec, ts.Nsec)
 }
 
 // FileModeIs tests the mode of 'filepath' with 'tester'. Examples:

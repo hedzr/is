@@ -30,3 +30,8 @@ func FileModifiedTime(fileInfo os.FileInfo) (tm time.Time) {
 	tm = timeSpecToTime(ts.Mtimespec)
 	return
 }
+
+func timeSpecToTime(ts syscall.Timespec) time.Time {
+	// TODO ts.Sec is not ok for plan9
+	return time.Unix(int64(ts.Sec), int64(ts.Nsec))
+}
