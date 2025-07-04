@@ -3,8 +3,18 @@
 
 package basics
 
-import "github.com/hedzr/is/basics/syscall"
+import (
+	"os"
+)
 
-func Raise(sig syscall.Signal) error {
+func RaiseSyscallSignal(sig any) error {
+	return raise(sig)
+}
+
+func raise(sig any) error {
+	return nil
+}
+
+func raiseOsSig(sig os.Signal) error {
 	return nil
 }

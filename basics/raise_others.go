@@ -1,10 +1,9 @@
-//go:build windows
-// +build windows
+//go:build !windows && !plan9
+// +build !windows,!plan9
 
 package basics
 
 import (
-	"errors"
 	"os"
 	"syscall"
 )
@@ -13,13 +12,13 @@ func RaiseSyscallSignal(sig syscall.Signal) error {
 	return raise(sig)
 }
 
-// Raise an OS signal is not support on Windows.
 func raise(sig syscall.Signal) error {
-	_ = sig
-	return errors.New("not supported")
+	return syscall.Kill(os.Getpid(), sig)
 }
 
 func raiseOsSig(sig os.Signal) error {
-	_ = sig
-	return errors.New("not supported")
+	if sigx, ok := sig.(syscall.Signal); ok {
+		return syscall.Kill(os.Getpid(), sigx)
+	}
+	return nil
 }
