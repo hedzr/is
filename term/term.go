@@ -44,6 +44,8 @@ func IsTerminal(fd int) bool {
 	return term.IsTerminal(fd)
 }
 
+func IsENOTTY(err error) bool { return errIsENOTTY(err) }
+
 // MakeRaw puts the terminal connected to the given file descriptor into raw
 // mode and returns the previous state of the terminal so that it can be
 // restored.

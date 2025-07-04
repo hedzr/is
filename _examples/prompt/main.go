@@ -2,13 +2,11 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"sync"
-	"syscall"
 
 	logz "log/slog"
 
@@ -142,7 +140,7 @@ func promptMode(ctx context.Context) (err error) {
 	var oldState *origterm.State
 	oldState, err = term.MakeRaw(0)
 	if err != nil {
-		if !errors.Is(err, syscall.ENOTTY) {
+		if !term.IsENOTTY(err) {
 			return err
 		}
 	}
