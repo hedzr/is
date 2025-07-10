@@ -1,6 +1,9 @@
 # CHANGELOG & HISTORY
 
 - v0.8.41
+  - security patch
+
+- v0.8.40
   - update examples/small app; added waitforseconds app
   - added `is.SignalEnh()` with customizable `WaitForSeconds(ctx, cancel, dur, opts...)`
   - improved signal_close.go
