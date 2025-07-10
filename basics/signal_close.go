@@ -293,7 +293,7 @@ func (s *catsig) WaitFor(ctx context.Context, mainLooper OnLooperFunc) {
 	}
 
 	if len(signals) == 0 {
-		signals = []os.Signal{os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGINT, syscall.SIGUSR1}
+		signals = []os.Signal{os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGINT, SIG_USR1}
 	}
 	signal.Notify(cc, signals...) //nolint:govet //whyNoLint for why
 
