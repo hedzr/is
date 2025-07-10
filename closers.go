@@ -2,10 +2,15 @@ package is
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"strings"
+	"sync"
+	"syscall"
+	"time"
 
 	"github.com/hedzr/is/basics"
 )
@@ -183,6 +188,184 @@ func (s signalS) CurrentProcess() *os.Process {
 	}
 	return p
 }
+
+//
+
+//
+
+//
+
+// SignalsEnh returns a rich-customized struct for operations.
+func SignalsEnh() *SignalsX { return &SignalsX{} }
+
+type SignalsX struct {
+	dur          time.Duration
+	msg          string
+	globalCloser func()
+	signals      []os.Signal
+	cancelled    int32
+}
+
+type CatcherOpt func(s *SignalsX)
+
+func WithCatcherMsg(msg string) CatcherOpt {
+	return func(s *SignalsX) {
+		s.msg = msg
+	}
+}
+
+func WithCatcherCloser(globalCloser func()) CatcherOpt {
+	return func(s *SignalsX) {
+		s.globalCloser = globalCloser
+	}
+}
+
+func WithCatcherDuration(dur time.Duration) CatcherOpt {
+	return func(s *SignalsX) {
+		s.dur = dur
+	}
+}
+
+func WithCatcherSignals(sigs ...os.Signal) CatcherOpt {
+	return func(s *SignalsX) {
+		s.signals = sigs
+	}
+}
+
+func (s SignalsX) Catch(sig ...os.Signal) basics.Catcher {
+	return basics.Catch(sig...)
+}
+
+// RaiseSignal should throw a POSIX signal to current process.
+//
+// It can work or not, see also the discusses at:
+//
+//	https://github.com/golang/go/issues/19326
+//
+// In general cases, it works. But in some special scenes it notifies a quiet thread somewhere.
+func (s SignalsX) RaiseSignal(sig os.Signal) error {
+	p, err := os.FindProcess(os.Getpid())
+	if err != nil {
+		return err
+	}
+	return p.Signal(sig)
+}
+
+func (s SignalsX) Wait() (*os.ProcessState, error) {
+	p, err := os.FindProcess(os.Getpid())
+	if err != nil {
+		return nil, err
+	}
+	return p.Wait()
+}
+
+func (s SignalsX) Kill() error {
+	p, err := os.FindProcess(os.Getpid())
+	if err != nil {
+		return err
+	}
+	return p.Kill()
+}
+
+func (s SignalsX) CurrentProcess() *os.Process {
+	p, err := os.FindProcess(os.Getpid())
+	if err != nil {
+		return nil
+	}
+	return p
+}
+
+func (s *SignalsX) WaitForContext(ctx context.Context, cancelFunc context.CancelFunc, opts ...CatcherOpt) {
+	catcher := s.Catch()
+
+	for _, opt := range opts {
+		opt(s)
+	}
+	if s.msg != "" {
+		catcher.WithPrompt(s.msg)
+	}
+	if len(s.signals) > 0 {
+		catcher.WithSignals(s.signals...)
+	}
+
+	catcher.
+		// WithOnLoopFunc(dbStarter, cacheStarter, mqStarter).
+		WithOnSignalCaught(func(ctx context.Context, sig os.Signal, wg *sync.WaitGroup) {
+			println()
+			if sig != syscall.SIGUSR1 { // not really a signal caught, this means catcher-manager is terminating an onSignalCaught handler.
+				slog.Info("signal caught (main)", "sig", sig)
+				if s.globalCloser != nil {
+					s.globalCloser() // cancel() // cancel user's loop, see <-ctx.Done() in Wait(...)
+				}
+				if cancelFunc != nil {
+					cancelFunc()
+				}
+			}
+		}).
+		WaitFor(ctx, func(ctx context.Context, closer func()) {
+			slog.Debug("entering looper's loop...")
+			// go func() {
+			defer closer()
+			// to terminate this app after a while automatically:
+			if s.dur > 0 {
+				// time.Sleep(s.dur)
+				ticker := time.NewTicker(s.dur)
+				defer ticker.Stop()
+				for {
+					select {
+					case <-ticker.C:
+						return
+					case <-ctx.Done():
+						return
+					}
+				}
+			}
+			// }()
+		})
+}
+
+func (s *SignalsX) WaitFor(ctx context.Context, opts ...CatcherOpt) {
+	s.WaitForContext(ctx, nil, opts...)
+}
+
+func (s *SignalsX) WaitForSeconds(ctx context.Context, cancelFunc context.CancelFunc, duration time.Duration, opts ...CatcherOpt) {
+	s.dur = duration
+	s.WaitForContext(ctx, cancelFunc, opts...)
+}
+
+// WaitForSeconds prompts a msg and waits for seconds, or user's pressing CTRL-C to quit.
+//
+//	package main
+//
+//	import (
+//		"context"
+//		"time"
+//
+//		"github.com/hedzr/is"
+//		"github.com/hedzr/is/timing"
+//	)
+//
+//	func main() {
+//		ctx, cancel := context.WithCancel(context.Background())
+//		defer cancel()
+//
+//		p := timing.New()
+//		defer p.CalcNow()
+//
+//		is.SignalsEnh().WaitForSeconds(ctx, cancel, 6*time.Second,
+//			// is.WithCatcherCloser(cancel),
+//			is.WithCatcherMsg("Press CTRL-C to quit, or waiting for 6s..."),
+//		)
+//	}
+func WaitForSeconds(ctx context.Context, cancelFunc context.CancelFunc, duration time.Duration, opts ...CatcherOpt) {
+	SignalsEnh().WaitForSeconds(ctx, cancelFunc, duration, opts...)
+}
+
+//
+
+//
+
+//
 
 // PressEnterToContinue lets program pause and wait for user's ENTER key press in console/terminal
 func PressEnterToContinue(in io.Reader, msg ...string) (input string) {
