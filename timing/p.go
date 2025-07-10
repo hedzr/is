@@ -5,6 +5,7 @@
 package timing
 
 import (
+	"io"
 	"log"
 	"time"
 )
@@ -26,13 +27,31 @@ type P interface {
 	WithoutWriter() P
 	// Duration returns the timing result of an invocation
 	Duration() time.Duration
+
+	// CalcNow calculates [Duration] right now to make
+	// log.Printf output for the eplaased timing.
+	//
+	// In general, you need to pass a log.Printf like
+	// [Writer] into [P], for example:
+	//
+	//    p := timing.New(timing.WithWriter(func(msg string, args ...any) {
+	//        fmt.Printf(msg, args...)
+	//        fmt.Println()
+	//    }))
+	//    defer p.CalcNow()
+	//
+	// If nothing applied, `log.Printf` will be used but you
+	// can also disable it by `timing.WithoutWriter()`.
+	// Then you must have to process the returning of [P.Duration]
+	// youself.
+	CalcNow()
 }
 
 // Opt is a type for implementing functional options pattern
 type Opt func(profiling *timeProfiling)
 
 // Writer is a formatter and printer such as log.Printf, t.Logf, ...
-type Writer func(msg string, args ...interface{})
+type Writer func(msg string, args ...any)
 
 // WithMsgFormat specify a msg-format string such as "xxx takes %v"
 func WithMsgFormat(msgTemplate string) Opt {
@@ -45,6 +64,13 @@ func WithMsgFormat(msgTemplate string) Opt {
 func WithWriter(w Writer) Opt {
 	return func(p *timeProfiling) {
 		p.w = w
+	}
+}
+
+// WithoutWriter specify an empty msg printer/formmater
+func WithoutWriter() Opt {
+	return func(p *timeProfiling) {
+		p.w = nil
 	}
 }
 
@@ -73,4 +99,8 @@ func (s *timeProfiling) Duration() time.Duration {
 		s.w(s.msg, elapsed)
 	}
 	return elapsed
+}
+
+func (s *timeProfiling) CalcNow() {
+	io.Discard.Write([]byte(s.Duration().String()))
 }
