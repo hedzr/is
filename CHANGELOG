@@ -1,5 +1,8 @@
 # CHANGELOG & HISTORY
 
+- v0.8.42
+  - fix signal_close in windows (sigusr1)
+
 - v0.8.41
   - security patch
 
