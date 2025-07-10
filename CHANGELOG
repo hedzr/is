@@ -1,5 +1,11 @@
 # CHANGELOG & HISTORY
 
+- v0.8.41
+  - update examples/small app; added waitforseconds app
+  - added `is.SignalEnh()` with customizable `WaitForSeconds(ctx, cancel, dur, opts...)`
+  - improved signal_close.go
+  - improved timing subpkg, added `CalcNow()`
+
 - v0.8.39
   - added/exposed `term.IsENOTTY(err)`
   - fixed/improved `signalS.Raise(sig)` for plan9
