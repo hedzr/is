@@ -5,18 +5,17 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/hedzr/is"
-	"github.com/hedzr/is/basics"
 	"github.com/hedzr/is/term"
 	"github.com/hedzr/is/term/color"
+	"github.com/hedzr/is/timing"
 )
 
 func main() {
-	defer basics.Close()
+	// Uncomment the following line when not using Catcher.
+	// defer basics.Close()
 
 	is.RegisterStateGetter("custom", func() bool { return is.InVscodeTerminal() })
 
@@ -48,34 +47,21 @@ func main() {
 	println("term.GetTtySizeByFile(stdout): ", rows, cols, err)
 	println("term.IsStartupByDoubleClick:   ", term.IsStartupByDoubleClick())
 
-	var cancelled int32
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	catcher := is.Signals().Catch()
-	catcher.
-		WithPrompt("Press CTRL-C to quit...").
-		// WithOnLoop(dbStarter, cacheStarter, mqStarter).
-		WithPeripherals(&dbMgr{}).
-		WithOnSignalCaught(func(ctx context.Context, sig os.Signal, wg *sync.WaitGroup) {
-			println()
-			slog.Info("signal caught", "sig", sig)
-			cancel() // cancel user's loop, see Wait(...)
-		}).
-		WaitFor(ctx, func(ctx context.Context, closer func()) {
-			slog.Debug("entering looper's loop...")
-			go func() {
-				// to terminate this app after a while automatically:
-				time.Sleep(10 * time.Second)
-				// stopChan <- os.Interrupt
-				closer()
-			}()
 
-			<-ctx.Done() // waiting until any os signal caught
+	p := timing.New()
+	defer p.CalcNow()
 
-			if atomic.CompareAndSwapInt32(&cancelled, 0, 1) {
-				is.PressAnyKeyToContinue(os.Stdin)
-			}
-		})
+	go func() {
+		time.Sleep(3 * time.Second)
+		cancel() // stop after 3s instead of waiting for 6s later.
+	}()
+
+	is.SignalsEnh().WaitForSeconds(ctx, cancel, 6*time.Second,
+		// is.WithCatcherCloser(cancel),
+		is.WithCatcherMsg("Press CTRL-C to quit, or waiting for 6s..."),
+	)
 }
 
 type dbMgr struct{}
