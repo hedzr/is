@@ -21,5 +21,8 @@ func raise(sig syscall.Signal) error {
 
 func raiseOsSig(sig os.Signal) error {
 	_ = sig
+	_ = os.Kill
 	return errors.New("not supported")
 }
+
+const SIG_USR1 = syscall.SIGALRM

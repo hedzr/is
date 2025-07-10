@@ -22,3 +22,5 @@ func raiseOsSig(sig os.Signal) error {
 	}
 	return nil
 }
+
+const SIG_USR1 = syscall.SIGUSR1

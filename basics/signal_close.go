@@ -300,7 +300,7 @@ func (s *catsig) WaitFor(ctx context.Context, mainLooper OnLooperFunc) {
 	for _, f := range looperHandlers {
 		go func(cc chan os.Signal, wgInitialized, wgForShutdown *sync.WaitGroup, f OnLooperFunc) {
 			wgInitialized.Done()
-			f(ctx, func() { cc <- syscall.SIGUSR1; wgForShutdown.Done() })
+			f(ctx, func() { cc <- SIG_USR1; wgForShutdown.Done() })
 		}(cc, &wgInitialized, &wgForShutdown, f)
 	}
 	wgInitialized.Wait()

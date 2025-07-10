@@ -9,7 +9,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/hedzr/is/basics"
@@ -292,7 +291,7 @@ func (s *SignalsX) WaitForContext(ctx context.Context, cancelFunc context.Cancel
 		// WithOnLoopFunc(dbStarter, cacheStarter, mqStarter).
 		WithOnSignalCaught(func(ctx context.Context, sig os.Signal, wg *sync.WaitGroup) {
 			println()
-			if sig != syscall.SIGUSR1 { // not really a signal caught, this means catcher-manager is terminating an onSignalCaught handler.
+			if sig != basics.SIG_USR1 { // not really a signal caught, this means catcher-manager is terminating an onSignalCaught handler.
 				slog.Info("signal caught (main)", "sig", sig)
 				if s.globalCloser != nil {
 					s.globalCloser() // cancel() // cancel user's loop, see <-ctx.Done() in Wait(...)

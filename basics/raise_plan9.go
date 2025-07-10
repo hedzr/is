@@ -5,6 +5,7 @@ package basics
 
 import (
 	"os"
+	"syscall"
 )
 
 func RaiseSyscallSignal(sig any) error {
@@ -16,5 +17,8 @@ func raise(sig any) error {
 }
 
 func raiseOsSig(sig os.Signal) error {
+	_ = os.Kill
 	return nil
 }
+
+const SIG_USR1 = syscall.Note("usr1")
