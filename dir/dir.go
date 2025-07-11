@@ -265,6 +265,46 @@ func RemoveDirRecursive(d string) (err error) {
 // 	return nil
 // }
 
+// RemoveExt erase the in(put) file's extension, and add newsuffix after it if necessary.
+//
+// If newsuffix is equal to old extension, return [errSame] as error.
+func RemoveExt(in string, newsuffix ...string) (out string, err error) {
+	return removeExt(in, newsuffix...)
+}
+
+func removeExt(in string, newsuffix ...string) (out string, err error) {
+	ext := path.Ext(in)
+
+	var suf string
+	if len(newsuffix) > 0 {
+		// suf := ".toml"
+		for _, t := range newsuffix {
+			suf = t
+		}
+		if suf == ext {
+			return in, errSame
+		}
+	}
+
+	if ext != "" {
+		tmp := in[:len(in)-len(ext)]
+		if suf != "" {
+			out = tmp + suf
+		} else {
+			out = tmp
+		}
+	} else {
+		if suf != "" {
+			out = in + suf
+		} else {
+			out = in
+		}
+	}
+	return
+}
+
+var errSame = errors.New("input and output file are same.")
+
 // NormalizeDir make dir name normalized
 func NormalizeDir(s string) string {
 	return normalizeDirImpl(s)
