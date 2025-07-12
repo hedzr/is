@@ -186,9 +186,9 @@ func (e *minimalEnv) removeHelper(slice []OnChanged, removingItems ...OnChanged)
 	result = slice
 	for _, h := range removingItems {
 		if h != nil {
-			hn := fnUniName(h)
+			hn := functionUniqueName(h)
 			for i, cb := range slice {
-				if fnUniName(cb) == hn {
+				if itn := functionUniqueName(cb); itn == hn {
 					// result = slices.Delete(e.noColorChanged, i, 1)
 					result = append(slice[0:i], slice[i+1:]...)
 					break
@@ -199,7 +199,7 @@ func (e *minimalEnv) removeHelper(slice []OnChanged, removingItems ...OnChanged)
 	return
 }
 
-func fnUniName(f OnChanged) string {
+func functionUniqueName(f OnChanged) string {
 	return runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 }
 
