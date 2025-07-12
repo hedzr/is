@@ -222,6 +222,15 @@ func (e *minimalEnv) GetDebugMode() bool { return e.debugMode || isdelve.Enabled
 func (e *minimalEnv) SetDebugMode(b bool) {
 	if save := e.debugMode; save != b {
 		e.debugMode = b
+		if b {
+			if e.debugLevel == 0 {
+				e.debugLevel++
+			}
+		} else {
+			if e.debugLevel > 0 {
+				e.debugLevel--
+			}
+		}
 		e.triggerDebugChanged()
 	}
 }
@@ -229,6 +238,11 @@ func (e *minimalEnv) GetDebugLevel() int { return e.debugLevel }
 func (e *minimalEnv) SetDebugLevel(hits int) {
 	if save := e.debugLevel; save != hits {
 		e.debugLevel = hits
+		if hits == 0 && e.debugMode {
+			e.debugMode = false
+		} else if hits > 0 && !e.debugMode {
+			e.debugMode = true
+		}
 		e.triggerDebugChanged()
 	}
 }
@@ -240,6 +254,15 @@ func (e *minimalEnv) GetTraceMode() bool { return e.traceMode || trace.IsEnabled
 func (e *minimalEnv) SetTraceMode(b bool) {
 	if save := e.traceMode; save != b {
 		e.traceMode = b
+		if b {
+			if e.traceLevel == 0 {
+				e.traceLevel++
+			}
+		} else {
+			if e.traceLevel > 0 {
+				e.traceLevel--
+			}
+		}
 		e.triggerTraceChanged()
 	}
 }
@@ -247,6 +270,11 @@ func (e *minimalEnv) GetTraceLevel() int { return e.traceLevel }
 func (e *minimalEnv) SetTraceLevel(hits int) {
 	if save := e.traceLevel; save != hits {
 		e.traceLevel = hits
+		if hits == 0 && e.traceMode {
+			e.traceMode = false
+		} else if hits > 0 && !e.traceMode {
+			e.traceMode = true
+		}
 		e.triggerTraceChanged()
 	}
 }
@@ -255,6 +283,15 @@ func (e *minimalEnv) IsNoColorMode() bool { return e.noColorMode }
 func (e *minimalEnv) SetNoColorMode(b bool) {
 	if save := e.noColorMode; save != b {
 		e.noColorMode = b
+		if b {
+			if e.noColorCount == 0 {
+				e.noColorCount++
+			}
+		} else {
+			if e.noColorCount > 0 {
+				e.noColorCount--
+			}
+		}
 		e.triggerNoColorChanged()
 	}
 }
@@ -263,6 +300,11 @@ func (e *minimalEnv) CountOfNoColor() int { return e.noColorCount }
 func (e *minimalEnv) SetNoColorCount(hits int) {
 	if save := e.noColorCount; save != hits {
 		e.noColorCount = hits
+		if hits == 0 && e.noColorMode {
+			e.noColorMode = false
+		} else if hits > 0 && !e.noColorMode {
+			e.noColorMode = true
+		}
 		e.triggerNoColorChanged()
 	}
 }
@@ -272,6 +314,15 @@ func (e *minimalEnv) IsVerboseModePure() bool { return e.verboseMode }
 func (e *minimalEnv) SetVerboseMode(b bool) {
 	if save := e.verboseMode; save != b {
 		e.verboseMode = b
+		if b {
+			if e.verboseCount == 0 {
+				e.verboseCount++
+			}
+		} else {
+			if e.verboseCount > 0 {
+				e.verboseCount--
+			}
+		}
 		e.triggerVerboseChanged()
 	}
 }
@@ -280,6 +331,11 @@ func (e *minimalEnv) CountOfVerbose() int { return e.verboseCount }
 func (e *minimalEnv) SetVerboseCount(hits int) {
 	if save := e.verboseCount; save != hits {
 		e.verboseCount = hits
+		if hits == 0 && e.verboseMode {
+			e.verboseMode = false
+		} else if hits > 0 && !e.verboseMode {
+			e.verboseMode = true
+		}
 		e.triggerVerboseChanged()
 	}
 }
@@ -288,6 +344,15 @@ func (e *minimalEnv) IsQuietMode() bool { return e.quietMode }
 func (e *minimalEnv) SetQuietMode(b bool) {
 	if save := e.quietMode; save != b {
 		e.quietMode = b
+		if b {
+			if e.quietCount == 0 {
+				e.quietCount++
+			}
+		} else {
+			if e.quietCount > 0 {
+				e.quietCount--
+			}
+		}
 		e.triggerQuietChanged()
 	}
 }
@@ -296,6 +361,11 @@ func (e *minimalEnv) CountOfQuiet() int { return e.quietCount }
 func (e *minimalEnv) SetQuietCount(hits int) {
 	if save := e.quietCount; save != hits {
 		e.quietCount = hits
+		if hits == 0 && e.quietMode {
+			e.quietMode = false
+		} else if hits > 0 && !e.quietMode {
+			e.quietMode = true
+		}
 		e.triggerQuietChanged()
 	}
 }
