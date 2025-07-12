@@ -236,7 +236,7 @@ func ExampleCSICodes() {
 
 	fmt.Printf("%s", color.New().RestorePosNow().Build())
 
-	// Output:
+	// Output s:
 	// [7A[7B[s[2,3H[u
 }
 
