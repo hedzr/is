@@ -1,5 +1,12 @@
 # CHANGELOG & HISTORY
 
+- v0.8.45
+  - added `dir.RemoveExt`
+  - link states mode & level, eg, set quiet level to 0 and quiet mode will also be set to false
+  - others
+    - meaningful func name for `functionUniqueName`
+    - disable `ExampleCSICodes` on remote ci server
+
 - v0.8.43
   - fix signal_close in windows again (sigusr1)
 
