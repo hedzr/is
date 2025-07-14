@@ -1,5 +1,10 @@
 # CHANGELOG & HISTORY
 
+- v0.8.46
+  - added history load/save machanism to `term.MakeNewTerm`
+  - added new `dirs` subpackage for well-known direcoties
+  - security patch
+
 - v0.8.45
   - added `dir.RemoveExt`
   - link states mode & level, eg, set quiet level to 0 and quiet mode will also be set to false
