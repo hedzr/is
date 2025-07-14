@@ -17,13 +17,18 @@
 package term
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
+	"path"
 	"sync"
 
 	"github.com/hedzr/is/basics"
+	"github.com/hedzr/is/dir"
+	"github.com/hedzr/is/dirs"
 	"golang.org/x/term"
 )
 
@@ -99,34 +104,104 @@ type SmallTerm interface {
 
 type LooperFunc func(ctx context.Context, tty SmallTerm, replyPrefix string, exitChan <-chan struct{}, closer func()) (err error)
 
-func MakeNewTerm(ctx context.Context, welcomeString, promptString, replyPrefix string, looper LooperFunc) (deferFunc func(), err error) {
+type PromptModeConfig struct {
+	Name              string // used for binding history records
+	WelcomeText       string
+	PromptText        string
+	ReplyText         string
+	MainLooperHandler LooperFunc
+	PostInitTerminal  func(t *term.Terminal)
+	MaxHistoryEntries int
+}
+
+func MakeNewTerm(ctx context.Context, config *PromptModeConfig) (deferFunc func(), err error) {
 	screen := struct {
 		io.Reader
 		io.Writer
 	}{os.Stdin, os.Stdout}
-	term := term.NewTerminal(screen, promptString)
-	term.SetPrompt(string(term.Escape.Red) + promptString + string(term.Escape.Reset))
+	term := term.NewTerminal(screen, config.PromptText)
+	term.SetPrompt(string(term.Escape.Red) + config.PromptText + string(term.Escape.Reset))
 
-	rePrefix := string(term.Escape.Cyan) + replyPrefix + string(term.Escape.Reset)
+	rePrefix := string(term.Escape.Cyan) + config.ReplyText + string(term.Escape.Reset)
 
 	exitChan := make(chan struct{}, 3)
 	deferFunc = func() { close(exitChan) }
 
+	if config.MaxHistoryEntries <= 1 {
+		config.MaxHistoryEntries = 1000
+	}
+	if config.MaxHistoryEntries > 12000 {
+		config.MaxHistoryEntries = 12000
+	}
+	if historyName := config.Name; historyName != "" {
+		historyDir := dirs.DataDir(config.Name, "is.term.history")
+		if err = dir.EnsureDir(historyDir); err != nil {
+			return
+		}
+		historyFile := path.Join(historyDir, "history.list")
+		if dir.FileExists(historyFile) {
+			var file *os.File
+			file, err = os.Open(historyFile)
+			if err != nil {
+				return
+			}
+			defer file.Close()
+
+			scanner := bufio.NewScanner(file)
+			for scanner.Scan() {
+				line := scanner.Text()
+				// fmt.Println(scanner.Text())
+				term.History.Add(line)
+			}
+
+			if err = scanner.Err(); err != nil {
+				return
+			}
+
+			// fmt.Printf("%d entries of %q loaded.\n", term.History.Len(), historyFile)
+			slog.Debug("history file has been loaded.\n", "enteries", term.History.Len(), "file", historyFile)
+		}
+		defer func() {
+			var file *os.File
+			file, err = os.Create(historyFile)
+			if err != nil {
+				return
+			}
+			defer file.Close()
+			l := term.History.Len()
+			for i := max(l-config.MaxHistoryEntries, 0); i < l; i++ {
+				line := term.History.At(i)
+				if _, err = file.WriteString(line); err != nil {
+					return
+				}
+				file.WriteString("\n")
+			}
+			// slog.Debug("%d entries of %q written.\n", term.History.Len(), historyFile)
+			slog.Debug("history file has been written.\n", "enteries", term.History.Len(), "file", historyFile)
+		}()
+	}
+
+	if fn := config.PostInitTerminal; fn != nil {
+		fn(term)
+	}
+
 	catcher := basics.Catch()
 	catcher.
-		WithVerboseFn(func(msg string, args ...any) {
-			// logz.WithSkip(2).PrintlnContext(ctx, fmt.Sprintf("[verbose] %s\n", fmt.Sprintf(msg, args...)))
-		}).
+		// WithVerboseFn(func(msg string, args ...any) {
+		// 	// logz.WithSkip(2).PrintlnContext(ctx, fmt.Sprintf("[verbose] %s\n", fmt.Sprintf(msg, args...)))
+		// }).
 		WithOnSignalCaught(func(ctx context.Context, sig os.Signal, wg *sync.WaitGroup) {
 			println()
 			// logz.Debug("signal caught", "sig", sig)
 			exitChan <- struct{}{}
 		}).
 		WaitFor(ctx, func(ctx context.Context, closer func()) {
-			if welcomeString != "" {
-				_, _ = fmt.Fprintln(term, welcomeString)
+			if config.WelcomeText != "" {
+				_, _ = fmt.Fprintln(term, config.WelcomeText)
 			}
-			err = looper(ctx, term, rePrefix, exitChan, closer)
+			if fn := config.MainLooperHandler; fn != nil {
+				err = fn(ctx, term, rePrefix, exitChan, closer)
+			}
 		})
 	return
 }
