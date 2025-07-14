@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"os/exec"
+
+	"github.com/hedzr/is/dirs"
 )
 
 // Root returns true if current user is 'root' or user is in sudo mode.
@@ -33,7 +35,7 @@ func WindowsWSL() bool {
 //
 // [NOTE] for unix platforms, more assetions and tests needed.
 func Unix() bool {
-	return runtime.GOOS == "linux" || runtime.GOOS == "darwin" || runtime.GOOS == "unix"
+	return dirs.Unix()
 }
 
 // Linux return true for General Linux Distros.
