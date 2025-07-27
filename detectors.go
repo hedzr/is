@@ -14,7 +14,37 @@ import (
 //
 // For windows it's always false.
 func Root() bool {
-	return Unix() && os.Getuid() == 0
+	return dirs.Unix() && os.Getuid() == 0
+}
+
+// AMD64 returns true if CPU arch is amd64.
+func AMD64() bool {
+	return runtime.GOARCH == "amd64"
+}
+
+// AMD64 returns true if CPU arch is amd64.
+func I386() bool {
+	return runtime.GOARCH == "386"
+}
+
+// AMD32 returns true if CPU arch is arm32.
+func ARM32() bool {
+	return runtime.GOARCH == "arm"
+}
+
+// AMD32BE returns true if CPU arch is arm32be.
+func ARM32BE() bool {
+	return runtime.GOARCH == "armbe"
+}
+
+// ARM64 returns true if CPU arch is arm64.
+func ARM64() bool {
+	return runtime.GOARCH == "arm64"
+}
+
+// ARM64BE returns true if CPU arch is arm64be.
+func ARM64BE() bool {
+	return runtime.GOARCH == "arm64be"
 }
 
 // Windows returns true for Microsoft Windows Platform.
@@ -56,6 +86,86 @@ func DarwinSilicon() bool {
 // DarwinIntel returns true if running under Apple Intel Machines.
 func DarwinIntel() bool {
 	return runtime.GOOS == "darwin" && runtime.GOARCH == "amd64"
+}
+
+// BSD returns true if running under Any BSD platform, including FreeBSD, NetBSD and OpenBSD.
+func BSD() bool {
+	return runtime.GOOS == "freebsd" || runtime.GOOS == "netbsd" || runtime.GOOS == "openbsd"
+}
+
+// Aix returns true if running under Aix platform.
+func Aix() bool {
+	return runtime.GOOS == "aix"
+}
+
+// Android returns true if running under Android platform.
+func Android() bool {
+	return runtime.GOOS == "android"
+}
+
+// Dragonfly returns true if running under Dragonfly platform.
+func Dragonfly() bool {
+	return runtime.GOOS == "dragonfly"
+}
+
+// FreeBSD returns true if running under FreeBSD platform.
+func FreeBSD() bool {
+	return runtime.GOOS == "freebsd"
+}
+
+// Hurd returns true if running under Hurd platform.
+func Hurd() bool {
+	return runtime.GOOS == "hurd"
+}
+
+// Illumos returns true if running under Illumos platform.
+func Illumos() bool {
+	return runtime.GOOS == "illumos"
+}
+
+// IOS returns true if running under iOS platform.
+func IOS() bool {
+	return runtime.GOOS == "ios"
+}
+
+// JS returns true if running under JS/WASM platform.
+func JS() bool {
+	return runtime.GOOS == "js"
+}
+
+// Nacl returns true if running under Nacl platform.
+func Nacl() bool {
+	return runtime.GOOS == "nacl"
+}
+
+// NetBSD returns true if running under NetBSD platform.
+func NetBSD() bool {
+	return runtime.GOOS == "netbsd"
+}
+
+// OpenBSD returns true if running under OpenBSD platform.
+func OpenBSD() bool {
+	return runtime.GOOS == "openbsd"
+}
+
+// Plan9 returns true if running under Plan9 platform.
+func Plan9() bool {
+	return runtime.GOOS == "plan9"
+}
+
+// Solaris returns true if running under Solaris platform.
+func Solaris() bool {
+	return runtime.GOOS == `solaris`
+}
+
+// Wasip1 returns true if running under Wasip1 platform.
+func Wasip1() bool {
+	return runtime.GOOS == `wasip1`
+}
+
+// Zos returns true if running under Zos platform.
+func Zos() bool {
+	return runtime.GOOS == `zos`
 }
 
 // Bash returns true if application is running under a Bash shell.
