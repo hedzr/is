@@ -1,5 +1,8 @@
 # CHANGELOG & HISTORY
 
+- v0.8.47
+  - added more os & arch detector such as `BSD()`
+
 - v0.8.46
   - added history load/save machanism to `term.MakeNewTerm`
   - added new `dirs` subpackage for well-known direcoties
