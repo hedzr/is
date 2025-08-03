@@ -115,8 +115,8 @@ func NewColor16(clr Color16) Color16 {
 // NewStyle creates a container of [Color] objects.
 // All of these children will be bound and printed
 // in a one sequences.
-func NewStyle() Style {
-	return Style{}
+func NewStyle() *Style {
+	return &Style{}
 }
 
 // NewControlCode return the given [ControlCode] code directly.
