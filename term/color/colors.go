@@ -137,17 +137,20 @@ func NewSGR(code CSIsgr) CSIsgr {
 	return code
 }
 
-func CSIAddCode(code CSIsuffix) (c CSICodes) {
+func CSIAddCode(code CSIsuffix) (c *CSICodes) {
+	c = &CSICodes{}
 	c.Items = append(c.Items, code.Code())
 	return
 }
 
-func CSIAddCode1(code CSIsuffix, n int) (c CSICodes) {
+func CSIAddCode1(code CSIsuffix, n int) (c *CSICodes) {
+	c = &CSICodes{}
 	c.Items = append(c.Items, code.Code1(n))
 	return
 }
 
-func CSIAddCode2(code CSIsuffix, n, m int) (c CSICodes) {
+func CSIAddCode2(code CSIsuffix, n, m int) (c *CSICodes) {
+	c = &CSICodes{}
 	c.Items = append(c.Items, code.Code2(n, m))
 	return
 }
@@ -395,34 +398,40 @@ type CSICodes struct {
 	Items []csiCode
 }
 
-func (c *CSICodes) AddCode(code CSIsuffix) {
+func (c *CSICodes) AddCode(code CSIsuffix) *CSICodes {
 	c.Items = append(c.Items, code.Code())
+	return c
 }
 
-func (c *CSICodes) AddCode1(code CSIsuffix, n int) {
+func (c *CSICodes) AddCode1(code CSIsuffix, n int) *CSICodes {
 	c.Items = append(c.Items, code.Code1(n))
+	return c
 }
 
-func (c *CSICodes) AddCode2(code CSIsuffix, n, m int) {
+func (c *CSICodes) AddCode2(code CSIsuffix, n, m int) *CSICodes {
 	c.Items = append(c.Items, code.Code2(n, m))
+	return c
 }
 
 func (c CSICodes) core(out CWriter) {
 	for i, it := range c.Items {
 		if i > 0 {
 			_ = out.WriteByte(';')
+		} else {
+			it.prologue(out)
 		}
 		it.core(out)
+		it.epilogue(out)
 	}
 }
 
 func (c CSICodes) Color() string {
 	var sb = NewFmtBuf()
 	if len(c.Items) > 0 {
-		cc := c.Items[0]
-		cc.prologue(sb)
-		cc.core(sb)
-		cc.epilogue(sb)
+		// cc := c.Items[0]
+		// cc.prologue(sb)
+		c.core(sb)
+		// cc.epilogue(sb)
 	}
 	return sb.PutBack()
 }
@@ -471,7 +480,7 @@ type csiCode interface {
 	prologue(out CWriter)
 	core(out CWriter)
 	epilogue(out CWriter)
-	And(cs CSIsuffix, n ...int) (codes CSICodes)
+	And(cs CSIsuffix, n ...int) (codes *CSICodes)
 }
 
 func (c CSICode) prologue(out CWriter) {
@@ -506,7 +515,8 @@ func (c CSICode) Int() (color int) {
 	return
 }
 
-func (c CSICode) And(cs CSIsuffix, n ...int) (codes CSICodes) {
+func (c CSICode) And(cs CSIsuffix, n ...int) (codes *CSICodes) {
+	codes = &CSICodes{}
 	codes.Items = append(codes.Items, c)
 	switch len(n) {
 	case 0:
