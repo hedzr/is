@@ -12,6 +12,7 @@ import (
 func TestClosers(t *testing.T) {
 	defer Closers().Close()
 
+	t.Log(DebuggerAttached())
 }
 
 type redisHub struct{}
