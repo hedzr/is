@@ -59,6 +59,14 @@ type Color interface {
 	Int() int
 	Color() string
 	ColorTo(out io.Writer)
+
+	// AddAndNew supports combine some of `Color` as one `Style`.
+	//
+	// For example:
+	//
+	//	var clr = color.FgBlue.AddAndNew(color.Underline, color.Dim)
+	//	var clr = color.Bolf.AddAndNew(color.RGB(33, 55, 77, false))
+	AddAndNew(colors ...Color) (newclr *Style)
 }
 
 var _ Color = (*Color16)(nil)
@@ -67,6 +75,11 @@ var _ Color = (*Color16m)(nil)
 var _ Color = (*Style)(nil)
 var _ Color = (*ControlCode)(nil)
 var _ Color = (*FeCode)(nil)
+var _ Color = (*CSICodes)(nil)
+var _ Color = (*CSICode)(nil)
+var _ Color = (*CSICode2)(nil)
+var _ Color = (*CSIsuffix)(nil)
+var _ Color = (*CSIsgr)(nil)
 
 // var _ = states.Env().IsNoColorMode()
 
@@ -159,21 +172,35 @@ type Color16 int // ANSI Escaped Sequences here
 
 func (c Color16) String() string { return c.Color() }
 
+func (c Color16) leading() string { return csi }
+func (c Color16) ending() byte    { return byte('m') }
+func (c Color16) prologue(out CWriter) {
+	_, _ = out.WriteString(c.leading())
+}
+
+func (c Color16) epilogue(out CWriter) {
+	_ = out.WriteByte(c.ending())
+}
+
+func (c Color16) core(out CWriter) {
+	_, _ = out.WriteInt(int(c))
+}
+
 func (c Color16) Color() string {
 	var sb = NewFmtBuf()
 	if i := int(c); i >= 0 {
-		_, _ = sb.WriteString(csi)
+		c.prologue(sb)
 		_, _ = sb.WriteInt(i)
-		_, _ = sb.WriteRune('m')
+		c.epilogue(sb)
 	}
 	return sb.PutBack()
 }
 
 func (c Color16) ColorTo(out io.Writer) {
 	if i := int(c); i >= 0 {
-		wrString(out, csi)
+		wrString(out, c.leading())
 		wrInt(out, i)
-		wrRune(out, 'm')
+		wrRune(out, rune(c.ending()))
 	}
 }
 
@@ -181,41 +208,105 @@ func (c Color16) Int() int {
 	return int(c)
 }
 
+func (c Color16) AddAndNew(colors ...Color) (newclr *Style) {
+	newclr = NewStyle().Add(c)
+	return newclr.Add(colors...)
+}
+
+func (c Color16) TryAppend(color colorCSI) (nc csiGroups, added bool) {
+	if b := color.ending(); b == c.ending() {
+		var g csiGroup
+		g, added = append(g, c, color), true
+		nc = csiGroups{g}
+	}
+	return
+}
+
+// type colorBase struct{}
+
+// func (c colorBase) String() string { return c.Color() }
+// func (c colorBase) Color() string {
+// 	var sb = NewFmtBuf()
+// 	c.prologue(sb)
+// 	c.core(sb)
+// 	c.epilogue(sb)
+// 	return sb.PutBack()
+// }
+// func (c colorBase) ColorTo(out io.Writer) {}
+// func (c colorBase) Int() (color int)      { return }
+// func (c colorBase) prologue(out CWriter)  { _, _ = out.WriteString(c.leading()) }
+// func (c colorBase) epilogue(out CWriter)  { _ = out.WriteByte(c.ending()) }
+// func (c colorBase) leading() string       { return csi }
+// func (c colorBase) ending() byte          { return byte('m') }
+// func (c colorBase) core(out CWriter)      { _ = out.WriteByte(byte('1')) }
+// func (c colorBase) AddAndNew(colors ...Color) (newclr *Style) {
+// 	newclr = NewStyle().Add(c)
+// 	return newclr.Add(colors...)
+// }
+
 type Color256 struct {
 	// r, g, b, a byte
 	clr [4]byte
 	bg  bool
 }
 
-func (c Color256) String() string { return c.Color() }
+func (c Color256) leading() string      { return csi }
+func (c Color256) ending() byte         { return byte('m') }
+func (c Color256) epilogue(out CWriter) { _ = out.WriteByte(c.ending()) }
+func (c Color256) prologue(out CWriter) {
+	_, _ = out.WriteString(c.leading())
+	if c.bg {
+		_, _ = out.WriteString("48;5;")
+	} else {
+		_, _ = out.WriteString("38;5;")
+	}
+}
 
+func (c Color256) core(out CWriter) {
+	_, _ = out.WriteInt(int(c.clr[0])) // r
+}
+
+// func (c Color256) Color() string {
+// 	var sb = NewFmtBuf()
+// 	c.prologue(sb)
+// 	if c.bg {
+// 		_, _ = sb.WriteString("48;5;")
+// 	} else {
+// 		_, _ = sb.WriteString("38;5;")
+// 	}
+// 	_, _ = sb.WriteInt(int(c.clr[0])) // r
+// 	c.epilogue(sb)
+// 	return sb.PutBack()
+// }
+
+func (c Color256) String() string { return c.Color() }
 func (c Color256) Color() string {
 	var sb = NewFmtBuf()
-	_, _ = sb.WriteString(csi)
-	if c.bg {
-		_, _ = sb.WriteString("48;5;")
-	} else {
-		_, _ = sb.WriteString("38;5;")
-	}
-	_, _ = sb.WriteInt(int(c.clr[0])) // r
-	_, _ = sb.WriteRune('m')
+	c.prologue(sb)
+	c.core(sb)
+	c.epilogue(sb)
 	return sb.PutBack()
 }
 
 func (c Color256) ColorTo(out io.Writer) {
-	wrString(out, csi)
+	wrString(out, c.leading())
 	if c.bg {
 		wrString(out, "48;5;")
 	} else {
 		wrString(out, "38;5;")
 	}
 	wrInt(out, int(c.clr[0])) // n
-	wrRune(out, 'm')
+	wrRune(out, rune(c.ending()))
 }
 
 func (c Color256) Int() (color int) {
 	_, _ = binary.Decode(c.clr[0:4], binary.LittleEndian, &color)
 	return
+}
+
+func (c Color256) AddAndNew(colors ...Color) (newclr *Style) {
+	newclr = NewStyle().Add(c)
+	return newclr.Add(colors...)
 }
 
 type Color16m struct {
@@ -224,27 +315,54 @@ type Color16m struct {
 	bg  bool
 }
 
-func (c Color16m) String() string { return c.Color() }
+func (c Color16m) leading() string      { return csi }
+func (c Color16m) ending() byte         { return byte('m') }
+func (c Color16m) epilogue(out CWriter) { _ = out.WriteByte(c.ending()) }
+func (c Color16m) prologue(out CWriter) {
+	_, _ = out.WriteString(c.leading())
+	if c.bg {
+		_, _ = out.WriteString("48;2;")
+	} else {
+		_, _ = out.WriteString("38;2;")
+	}
+}
 
+func (c Color16m) core(out CWriter) {
+	_, _ = out.WriteInt(int(c.clr[0])) // r
+	_, _ = out.WriteRune(';')
+	_, _ = out.WriteInt(int(c.clr[1])) // g
+	_, _ = out.WriteRune(';')
+	_, _ = out.WriteInt(int(c.clr[2])) // b
+}
+
+// func (c Color16m) Color() string {
+// 	var sb = NewFmtBuf()
+// 	_, _ = sb.WriteString(csi)
+// 	if c.bg {
+// 		_, _ = sb.WriteString("48;2;")
+// 	} else {
+// 		_, _ = sb.WriteString("38;2;")
+// 	}
+// 	_, _ = sb.WriteInt(int(c.clr[0])) // r
+// 	_, _ = sb.WriteRune(';')
+// 	_, _ = sb.WriteInt(int(c.clr[1])) // g
+// 	_, _ = sb.WriteRune(';')
+// 	_, _ = sb.WriteInt(int(c.clr[2])) // b
+// 	_, _ = sb.WriteRune('m')
+// 	return sb.PutBack()
+// }
+
+func (c Color16m) String() string { return c.Color() }
 func (c Color16m) Color() string {
 	var sb = NewFmtBuf()
-	_, _ = sb.WriteString(csi)
-	if c.bg {
-		_, _ = sb.WriteString("48;2;")
-	} else {
-		_, _ = sb.WriteString("38;2;")
-	}
-	_, _ = sb.WriteInt(int(c.clr[0])) // r
-	_, _ = sb.WriteRune(';')
-	_, _ = sb.WriteInt(int(c.clr[1])) // g
-	_, _ = sb.WriteRune(';')
-	_, _ = sb.WriteInt(int(c.clr[2])) // b
-	_, _ = sb.WriteRune('m')
+	c.prologue(sb)
+	c.core(sb)
+	c.epilogue(sb)
 	return sb.PutBack()
 }
 
 func (c Color16m) ColorTo(out io.Writer) {
-	wrString(out, csi)
+	wrString(out, c.leading())
 	if c.bg {
 		wrString(out, "48;2;")
 	} else {
@@ -255,12 +373,17 @@ func (c Color16m) ColorTo(out io.Writer) {
 	wrInt(out, int(c.clr[1])) // g
 	wrRune(out, ';')
 	wrInt(out, int(c.clr[2])) // b
-	wrRune(out, 'm')
+	wrRune(out, rune(c.ending()))
 }
 
 func (c Color16m) Int() (color int) {
 	_, _ = binary.Decode(c.clr[0:4], binary.LittleEndian, &color)
 	return
+}
+
+func (c Color16m) AddAndNew(colors ...Color) (newclr *Style) {
+	newclr = NewStyle().Add(c)
+	return newclr.Add(colors...)
 }
 
 // Style is an array of [Color] objects
@@ -269,8 +392,50 @@ type Style struct {
 }
 
 func (c *Style) Add(colors ...Color) *Style {
-	c.Items = append(c.Items, colors...)
+	if l := len(c.Items); l == 0 {
+		c.Items = append(c.Items, colors...)
+		return c
+	} else {
+		last := c.Items[l-1]
+		if ta, ok := last.(interface {
+			TryAppend(color colorCSI) (nc csiGroups, added bool)
+		}); ok {
+			for _, clr := range colors {
+				if csiclr, ok := clr.(colorCSI); ok {
+					if nc, added := ta.TryAppend(csiclr); added {
+						c.Items[l-1] = nc
+					}
+				}
+			}
+		} else if ta, ok := last.(interface {
+			TryAppend(color colorCSI) (added bool)
+		}); ok {
+			for _, clr := range colors {
+				if csiclr, ok := clr.(colorCSI); ok {
+					if added := ta.TryAppend(csiclr); !added {
+						println("warn: colorCSI", csiclr, "failed to Style.TryAppend()")
+					}
+				}
+			}
+		} else {
+			c.Items = append(c.Items, colors...)
+		}
+	}
 	return c
+}
+
+func (c Style) leading() string { return csi }
+func (c Style) ending() byte    { return 0 }
+func (c Style) prologue(out CWriter) {
+	// _, _ = out.WriteString(c.leading())
+}
+func (c Style) epilogue(out CWriter) {
+	// _, _ = out.WriteRune(rune(c.ending()))
+}
+func (c Style) core(out CWriter) {
+	for _, it := range c.Items {
+		it.ColorTo(out)
+	}
 }
 
 func (c Style) String() string { return c.Color() }
@@ -296,21 +461,234 @@ func (c Style) Int() (color int) {
 	return
 }
 
+func (c Style) AddAndNew(colors ...Color) (newclr *Style) {
+	newclr = NewStyle().Add(c)
+	return newclr.Add(colors...)
+}
+
+type colorCSI interface {
+	leading() string
+	ending() byte
+	prologue(out CWriter)
+	epilogue(out CWriter)
+	core(out CWriter)
+}
+
+var _ colorCSI = (*Color16)(nil)
+var _ colorCSI = (*Color256)(nil)
+var _ colorCSI = (*Color16m)(nil)
+var _ colorCSI = (*Style)(nil)
+var _ colorCSI = (*ControlCode)(nil)
+var _ colorCSI = (*FeCode)(nil)
+var _ colorCSI = (*csiGroup)(nil)
+var _ colorCSI = (*csiGroupS)(nil)
+var _ colorCSI = (*CSICodes)(nil)
+var _ colorCSI = (*CSICode)(nil)
+var _ colorCSI = (*CSICode2)(nil)
+var _ colorCSI = (CSIsuffix)(0)
+var _ colorCSI = (*CSIsgr)(nil)
+
+type csiGroup []colorCSI
+
+func (c csiGroup) leading() string { return csi }
+func (c csiGroup) ending() byte {
+	if l := len(c); l > 0 {
+		last := c[l-1]
+		return last.ending()
+	}
+	return 0
+}
+func (c csiGroup) prologue(out CWriter) {
+	_, _ = out.WriteString(c.leading())
+}
+func (c csiGroup) epilogue(out CWriter) {
+	if l := len(c); l > 0 {
+		last := c[l-1]
+		_, _ = out.WriteRune(rune(last.ending()))
+	}
+}
+func (c csiGroup) core(out CWriter) {
+	for i, it := range c {
+		if i > 0 {
+			out.WriteRune(';')
+		}
+		it.core(out)
+	}
+}
+
+func (c csiGroup) TryAppend(color colorCSI) (nc csiGroup, added bool) {
+	if l := len(c); l > 0 {
+		last := c[l-1]
+		if b := last.ending(); b == color.ending() {
+			added, nc = true, append(c, color)
+		}
+	} else {
+		added, nc = true, append(c, color)
+	}
+	return
+}
+
+type csiGroupS struct {
+	Items csiGroups
+}
+
+type csiGroups []csiGroup
+
+func (c csiGroups) leading() string { return csi }
+func (c csiGroups) ending() byte {
+	if l := len(c); l > 0 {
+		last := c[l-1]
+		return last.ending()
+	}
+	return 0
+}
+func (c csiGroups) prologue(out CWriter) {
+	_, _ = out.WriteString(c.leading())
+}
+func (c csiGroups) epilogue(out CWriter) {
+	if l := len(c); l > 0 {
+		last := c[l-1]
+		_, _ = out.WriteRune(rune(last.ending()))
+	}
+}
+func (c csiGroups) core(out CWriter) {
+	for i, it := range c {
+		if i > 0 {
+			out.WriteRune(';')
+		}
+		it.core(out)
+	}
+}
+
+func (c csiGroups) TryAppend(color colorCSI) (gs csiGroups) {
+	if l := len(c); l > 0 {
+		for _, it := range c {
+			if nc, add := it.TryAppend(color); add {
+				gs = append(gs, nc)
+			} else {
+				gs = append(gs, it)
+			}
+		}
+	} else {
+		var grp csiGroup
+		grp, _ = grp.TryAppend(color)
+		gs = append(gs, grp)
+	}
+	return
+}
+
+func (c csiGroups) Color() string {
+	var sb = NewFmtBuf()
+	c.prologue(sb)
+	c.core(sb)
+	c.epilogue(sb)
+	return sb.PutBack()
+}
+
+func (c csiGroups) ColorTo(out io.Writer) {
+	out.Write([]byte(c.Color()))
+}
+
+func (c csiGroups) Int() (color int) {
+	return
+}
+
+func (c csiGroups) AddAndNew(colors ...Color) (newclr *Style) {
+	newclr = NewStyle().Add(c)
+	return newclr.Add(colors...)
+}
+
+func (c csiGroups) String() string { return c.Color() }
+
+func (c csiGroupS) TryAppend(color colorCSI) (added bool) {
+	c.Items = c.Items.TryAppend(color)
+	added = true
+	return
+}
+
+func (c csiGroupS) leading() string { return csi }
+func (c csiGroupS) ending() byte {
+	if l := len(c.Items); l > 0 {
+		last := c.Items[l-1]
+		return last.ending()
+	}
+	return 0
+}
+func (c csiGroupS) prologue(out CWriter) {
+	_, _ = out.WriteString(c.leading())
+}
+func (c csiGroupS) epilogue(out CWriter) {
+	if l := len(c.Items); l > 0 {
+		last := c.Items[l-1]
+		_, _ = out.WriteRune(rune(last.ending()))
+	}
+}
+func (c csiGroupS) core(out CWriter) {
+	for _, it := range c.Items {
+		it.prologue(out)
+		it.core(out)
+		it.epilogue(out)
+	}
+}
+
+func (c csiGroupS) Add(colors ...Color) *Style {
+	return c.AddEx(colors...)
+}
+
+func (c *csiGroupS) AddEx(colors ...Color) (newsty *Style) {
+	newsty = &Style{}
+	for _, clr := range colors {
+		if csiclr, ok := clr.(colorCSI); ok {
+			c.Items = c.Items.TryAppend(csiclr)
+		} else {
+			newsty = newsty.Add(clr)
+		}
+	}
+	return
+}
+
+func (c csiGroupS) AddAndNew(colors ...Color) (newclr *Style) {
+	newclr = NewStyle().Add(c)
+	return newclr.Add(colors...)
+}
+
+func (c csiGroupS) Color() string {
+	if len(c.Items) > 0 {
+		var sb = NewFmtBuf()
+		for _, cc := range c.Items {
+			cc.prologue(sb)
+			cc.core(sb)
+			cc.epilogue(sb)
+		}
+		return sb.PutBack()
+	}
+	return ""
+}
+
+func (c csiGroupS) ColorTo(out io.Writer) {
+	wrString(out, c.Color())
+}
+
+func (c csiGroupS) Int() (color int) {
+	return
+}
+
 type ControlCode byte
 
 func (c ControlCode) String() string { return c.Color() }
 
-func (c ControlCode) Color() string {
-	return string(byte(c))
-}
+func (c ControlCode) leading() string       { return "" }
+func (c ControlCode) ending() byte          { return 0 }
+func (c ControlCode) prologue(out CWriter)  {}
+func (c ControlCode) epilogue(out CWriter)  {}
+func (c ControlCode) core(out CWriter)      { wrString(out, c.Color()) }
+func (c ControlCode) Color() string         { return string(byte(c)) }
+func (c ControlCode) ColorTo(out io.Writer) { wrString(out, c.Color()) }
+func (c ControlCode) Int() (color int)      { return int(byte(c)) }
 
-func (c ControlCode) ColorTo(out io.Writer) {
-	wrString(out, c.Color())
-}
-
-func (c ControlCode) Int() (color int) {
-	color = int(byte(c))
-	return
+func (c ControlCode) AddAndNew(colors ...Color) (newclr *Style) {
+	newclr = NewStyle().Add(c)
+	return newclr.Add(colors...)
 }
 
 // See also these rune(s)
@@ -338,6 +716,14 @@ type FeCode byte
 
 func (c FeCode) String() string { return c.Color() }
 
+func (c FeCode) leading() string       { return "" }
+func (c FeCode) ending() byte          { return 0 }
+func (c FeCode) prologue(out CWriter)  {}
+func (c FeCode) epilogue(out CWriter)  {}
+func (c FeCode) core(out CWriter)      { wrString(out, c.Color()) }
+func (c FeCode) ColorTo(out io.Writer) { wrString(out, c.Color()) }
+func (c FeCode) Int() (color int)      { return int(byte(c)) }
+
 func (c FeCode) Color() string {
 	var sb = NewFmtBuf()
 	_ = sb.WriteByte(ESCAPE)
@@ -345,13 +731,9 @@ func (c FeCode) Color() string {
 	return sb.PutBack()
 }
 
-func (c FeCode) ColorTo(out io.Writer) {
-	wrString(out, c.Color())
-}
-
-func (c FeCode) Int() (color int) {
-	color = int(byte(c))
-	return
+func (c FeCode) AddAndNew(colors ...Color) (newclr *Style) {
+	newclr = NewStyle().Add(c)
+	return newclr.Add(colors...)
 }
 
 const (
@@ -413,6 +795,19 @@ func (c *CSICodes) AddCode2(code CSIsuffix, n, m int) *CSICodes {
 	return c
 }
 
+// func (c CSICodes) leading() string       { return "" }
+// func (c CSICodes) ending() byte          { return 0 }
+// func (c CSICodes) prologue(out CWriter)  {}
+// func (c CSICodes) epilogue(out CWriter)  {}
+// func (c CSICodes) core(out CWriter)      { wrString(out, c.Color()) }
+// func (c CSICodes) Color() string         { return string(byte(c)) }
+// func (c CSICodes) ColorTo(out io.Writer) { wrString(out, c.Color()) }
+// func (c CSICodes) Int() (color int)      { return int(byte(c)) }
+
+func (c CSICodes) leading() string      { return csi }
+func (c CSICodes) ending() byte         { return byte('m') }
+func (c CSICodes) epilogue(out CWriter) { _ = out.WriteByte(c.ending()) }
+func (c CSICodes) prologue(out CWriter) { _, _ = out.WriteString(c.leading()) }
 func (c CSICodes) core(out CWriter) {
 	for i, it := range c.Items {
 		if i > 0 {
@@ -442,6 +837,11 @@ func (c CSICodes) ColorTo(out io.Writer) {
 
 func (c CSICodes) Int() (color int) {
 	return
+}
+
+func (c CSICodes) AddAndNew(colors ...Color) (newclr *Style) {
+	newclr = NewStyle().Add(c)
+	return newclr.Add(colors...)
 }
 
 func (c CSICodes) String() string { return c.Color() }
@@ -483,6 +883,15 @@ type csiCode interface {
 	And(cs CSIsuffix, n ...int) (codes *CSICodes)
 }
 
+func (c CSICode) leading() string { return csi }
+func (c CSICode) ending() byte    { return byte(c.Suffix) }
+
+// func (c CSICode) prologue(out CWriter)  {}
+// func (c CSICode) epilogue(out CWriter)  {}
+// func (c CSICode) core(out CWriter)      { wrString(out, c.Color()) }
+// func (c CSICode) ColorTo(out io.Writer) { wrString(out, c.Color()) }
+// func (c CSICode) Int() (color int)      { return int(byte(c)) }
+
 func (c CSICode) prologue(out CWriter) {
 	_, _ = out.WriteString(csi)
 }
@@ -513,6 +922,11 @@ func (c CSICode) ColorTo(out io.Writer) {
 
 func (c CSICode) Int() (color int) {
 	return
+}
+
+func (c CSICode) AddAndNew(colors ...Color) (newclr *Style) {
+	newclr = NewStyle().Add(c)
+	return newclr.Add(colors...)
 }
 
 func (c CSICode) And(cs CSIsuffix, n ...int) (codes *CSICodes) {
@@ -552,16 +966,25 @@ func (c CSICode2) core(out CWriter) {
 type CSIsuffix byte
 
 func (c CSIsuffix) Code() CSICode {
-	return CSICode{1, c}
+	return CSICode{N: 1, Suffix: c}
 }
 
 func (c CSIsuffix) Code1(n int) CSICode {
-	return CSICode{n, c}
+	return CSICode{N: n, Suffix: c}
 }
 
 func (c CSIsuffix) Code2(n, m int) CSICode2 {
-	return CSICode2{m, CSICode{n, c}}
+	return CSICode2{m, CSICode{N: n, Suffix: c}}
 }
+
+func (c CSIsuffix) leading() string      { return csi }
+func (c CSIsuffix) ending() byte         { return byte(c) }
+func (c CSIsuffix) prologue(out CWriter) { out.WriteString(csi) }
+func (c CSIsuffix) epilogue(out CWriter) { out.WriteByte(byte(c)) }
+func (c CSIsuffix) core(out CWriter)     {}
+
+// func (c CSIsuffix) ColorTo(out io.Writer) { wrString(out, c.Color()) }
+// func (c CSIsuffix) Int() (color int)      { return int(byte(c)) }
 
 func (c CSIsuffix) Color() string {
 	var sb = NewFmtBuf()
@@ -570,18 +993,25 @@ func (c CSIsuffix) Color() string {
 	return sb.PutBack()
 }
 
-func (c CSIsuffix) String() string { return c.Color() }
+func (c CSIsuffix) String() string        { return c.Color() }
+func (c CSIsuffix) ColorTo(out io.Writer) { wrString(out, c.Color()) }
+func (c CSIsuffix) Int() (color int)      { return int(byte(c)) }
 
-func (c CSIsuffix) ColorTo(out io.Writer) {
-	wrString(out, c.Color())
-}
-
-func (c CSIsuffix) Int() (color int) {
-	color = int(byte(c))
-	return
+func (c CSIsuffix) AddAndNew(colors ...Color) (newclr *Style) {
+	newclr = NewStyle().Add(c)
+	return newclr.Add(colors...)
 }
 
 type CSIsgr byte
+
+func (c CSIsgr) leading() string       { return csi }
+func (c CSIsgr) ending() byte          { return 'm' }
+func (c CSIsgr) prologue(out CWriter)  { out.WriteString(csi) }
+func (c CSIsgr) epilogue(out CWriter)  { out.WriteByte('m') }
+func (c CSIsgr) core(out CWriter)      { out.WriteInt(int(byte(c))) }
+func (c CSIsgr) ColorTo(out io.Writer) { wrString(out, c.Color()) }
+func (c CSIsgr) Int() (color int)      { return int(byte(c)) }
+func (c CSIsgr) String() string        { return c.Color() }
 
 func (c CSIsgr) Color() string {
 	var sb = NewFmtBuf()
@@ -591,15 +1021,9 @@ func (c CSIsgr) Color() string {
 	return sb.PutBack()
 }
 
-func (c CSIsgr) String() string { return c.Color() }
-
-func (c CSIsgr) ColorTo(out io.Writer) {
-	wrString(out, c.Color())
-}
-
-func (c CSIsgr) Int() (color int) {
-	color = int(byte(c))
-	return
+func (c CSIsgr) AddAndNew(colors ...Color) (newclr *Style) {
+	newclr = NewStyle().Add(c)
+	return newclr.Add(colors...)
 }
 
 const (

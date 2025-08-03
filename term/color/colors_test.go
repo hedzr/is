@@ -64,7 +64,7 @@ func TestColor16mAndMore(t *testing.T) {
 		var clr Color = NewStyle().Add(FgYellow).Add(Bold)
 		var str = New().Printf("%s◉♦︎⚑⬛︎◼︎◾︎▪︎■█▉hello\x1b[0m, %s.", clr.Color(), "world").Build()
 		t.Log(str)
-		const Output = "\x1b[33m\x1b[1m◉♦︎⚑⬛︎◼︎◾︎▪︎■█▉hello\x1b[0m, world."
+		const Output = "\x1b[33;1m◉♦︎⚑⬛︎◼︎◾︎▪︎■█▉hello\x1b[0m, world."
 		// const Output = "[31mhello, world.[0m"
 		if str != Output {
 			t.Fatalf("bad, expect %q but got %q", Output, str)
@@ -78,6 +78,20 @@ func TestColor16mAndMore(t *testing.T) {
 		var str = New().Printf("%s◉♦︎⚑⬛︎◼︎◾︎▪︎■█▉hello\x1b[0m, %s.", clr.Color(), "world").Build()
 		t.Log(str)
 		const Output = "\x1b[A;B◉♦︎⚑⬛︎◼︎◾︎▪︎■█▉hello\x1b[0m, world."
+		// const Output = "[31mhello, world.[0m"
+		if str != Output {
+			t.Fatalf("bad, expect %q but got %q", Output, str)
+		} else {
+			t.Logf("GOOD, got: %q", str)
+		}
+	})
+	// grouped csi code, such as: '\x1b[33;43;2m'
+	t.Run("s7", func(t *testing.T) {
+		// another colorful builfer
+		var clr Color = FgYellow.AddAndNew(BgStrikeout)
+		var str = New().Printf("%s◉♦︎⚑⬛︎◼︎◾︎▪︎■█▉hello\x1b[0m, %s.", clr.Color(), "world").Build()
+		t.Log(str)
+		const Output = "\x1b[33;9m◉♦︎⚑⬛︎◼︎◾︎▪︎■█▉hello\x1b[0m, world."
 		// const Output = "[31mhello, world.[0m"
 		if str != Output {
 			t.Fatalf("bad, expect %q but got %q", Output, str)
