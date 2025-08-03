@@ -1,5 +1,9 @@
 # CHANGELOG & HISTORY
 
+- v0.8.50
+  - add `Color.AddAndNew(colors...)` to combine multiple `Color` object as one (`Style`)
+    some of them can be compacted into `csiGroup`/`csiGroups`, such as `\x1b[33;2m`.
+
 - v0.8.49
   - fix `NewColor16m` to return `*Color16m` as a `Color` object, and same action for `NewColor256`
   - fix `NewStyle` to return `*Style` as a `Color` object
