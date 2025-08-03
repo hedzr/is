@@ -73,8 +73,8 @@ var _ Color = (*FeCode)(nil)
 // NewColor16m constrcuts a true-color object
 // which can be serialized as ansi escaped
 // sequences by calling [Color]() string.
-func NewColor16m(r, g, b byte, isBg bool) Color16m {
-	return Color16m{
+func NewColor16m(r, g, b byte, isBg bool) *Color16m {
+	return &Color16m{
 		clr: [4]byte{r, g, b}, bg: isBg,
 	}
 }
@@ -82,8 +82,8 @@ func NewColor16m(r, g, b byte, isBg bool) Color16m {
 // NewColor16m constrcuts a 8-bit object
 // which can be serialized as ansi escaped
 // sequences by calling [Color]() string.
-func NewColor256(clr byte, isBg bool) Color256 {
-	return Color256{
+func NewColor256(clr byte, isBg bool) *Color256 {
+	return &Color256{
 		clr: [4]byte{clr}, bg: isBg,
 	}
 }
@@ -881,4 +881,9 @@ const (
 	// NoColor is not a declared ansi code but we can use it for identifying
 	// a variable isn't initializing yet.
 	NoColor = Color16(-1)
+)
+
+var (
+	clrInfo Color = NewColor16m(57, 108, 229, false)
+	clrWarn Color = NewColor16m(149, 108, 30, false)
 )
