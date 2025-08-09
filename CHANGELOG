@@ -1,5 +1,8 @@
 # CHANGELOG & HISTORY
 
+- v0.8.51
+  - security patch
+
 - v0.8.50
   - add `Color.AddAndNew(colors...)` to combine multiple `Color` object as one (`Style`)
     some of them can be compacted into `csiGroup`/`csiGroups`, such as `\x1b[33;2m`.
@@ -330,7 +333,7 @@
 - v0.5.5
   - fix code indents in readme
   - security updates
-  - add '<dim>dim text</dim>'
+  - add `<dim>dim text</dim>`
   - update color.Translator interface
   - fix GetTtySize for darwin
 
