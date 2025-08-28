@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"strings"
 	"sync"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/hedzr/is/states"
@@ -33,7 +34,8 @@ func ToColorInt(s string) Color      { return cpt.ToColorInt(s) }
 var _ Translator = (*cpTranslator)(nil) // ensure cpTranslator implements Translator
 
 type cpTranslator struct {
-	noColorMode bool // strip color code simply
+	noColorMode     bool // strip color code simply
+	noLeadingSpaces bool
 }
 
 func (c *cpTranslator) Translate(s string, initialFg Color) string {
@@ -73,17 +75,33 @@ func (c *cpTranslator) TranslateTo(s string, initialState Color) string {
 		return c._ss(s)
 	}
 
-	node, err := html.Parse(bufio.NewReader(strings.NewReader(s)))
+	if c.noLeadingSpaces {
+		node, err := html.Parse(bufio.NewReader(strings.NewReader(string(s))))
+		if err != nil {
+			return c._sz(s)
+		}
+
+		return c.translateTo(node, "", s, initialState)
+	}
+
+	runes, pos := []rune(s), 0
+	for unicode.IsSpace(runes[pos]) {
+		pos++
+	}
+	cs := string(runes[pos:])
+	node, err := html.Parse(bufio.NewReader(strings.NewReader(cs)))
 	if err != nil {
 		return c._sz(s)
 	}
 
-	return c.translateTo(node, s, initialState)
+	return c.translateTo(node, string(runes[:pos]), cs, initialState)
 }
 
-func (c *cpTranslator) translateTo(root *html.Node, source string, initialState Color) string {
+func (c *cpTranslator) translateTo(root *html.Node, leading, source string, initialState Color) string {
 	states, _ := []Color{initialState}, source //nolint:revive,gocritic
 	var sb strings.Builder
+
+	_, _ = sb.WriteString(leading)
 
 	var walker func(node *html.Node, level int)
 	colorize := c.colorize(&sb, states, &walker)
