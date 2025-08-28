@@ -1,5 +1,9 @@
 # CHANGELOG & HISTORY
 
+- v0.8.53
+  - added `Wrap(text string) string` to `Color` interface so that `color.BgDim.Wrap("hello")` could work
+  - `Translator` will keep the leading spaces now.
+
 - v0.8.51
   - security patch
 
