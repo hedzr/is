@@ -60,6 +60,12 @@ type Color interface {
 	Color() string
 	ColorTo(out io.Writer)
 
+	// Wrap Color arround text.
+	// For example:
+	//
+	//	color.Bold.Wrap(color.FgRed.Wrap("Error occurres!"))
+	Wrap(text string) string
+
 	// AddAndNew supports combine some of `Color` as one `Style`.
 	//
 	// For example:
@@ -186,12 +192,18 @@ func (c Color16) core(out CWriter) {
 	_, _ = out.WriteInt(int(c))
 }
 
-func (c Color16) Color() string {
+func (c Color16) Color() string { return c.Wrap("") }
+
+func (c Color16) Wrap(text string) string {
 	var sb = NewFmtBuf()
 	if i := int(c); i >= 0 {
 		c.prologue(sb)
 		_, _ = sb.WriteInt(i)
 		c.epilogue(sb)
+	}
+	if len(text) > 0 {
+		_, _ = sb.WriteString(text)
+		Reset.ColorTo(sb)
 	}
 	return sb.PutBack()
 }
@@ -280,11 +292,17 @@ func (c Color256) core(out CWriter) {
 // }
 
 func (c Color256) String() string { return c.Color() }
-func (c Color256) Color() string {
+func (c Color256) Color() string  { return c.Wrap("") }
+
+func (c Color256) Wrap(text string) string {
 	var sb = NewFmtBuf()
 	c.prologue(sb)
 	c.core(sb)
 	c.epilogue(sb)
+	if len(text) > 0 {
+		_, _ = sb.WriteString(text)
+		Reset.ColorTo(sb)
+	}
 	return sb.PutBack()
 }
 
@@ -353,11 +371,16 @@ func (c Color16m) core(out CWriter) {
 // }
 
 func (c Color16m) String() string { return c.Color() }
-func (c Color16m) Color() string {
+func (c Color16m) Color() string  { return c.Wrap("") }
+func (c Color16m) Wrap(text string) string {
 	var sb = NewFmtBuf()
 	c.prologue(sb)
 	c.core(sb)
 	c.epilogue(sb)
+	if len(text) > 0 {
+		_, _ = sb.WriteString(text)
+		Reset.ColorTo(sb)
+	}
 	return sb.PutBack()
 }
 
@@ -439,11 +462,15 @@ func (c Style) core(out CWriter) {
 }
 
 func (c Style) String() string { return c.Color() }
-
-func (c Style) Color() string {
+func (c Style) Color() string  { return c.Wrap("") }
+func (c Style) Wrap(text string) string {
 	var sb = NewFmtBuf()
 	for _, it := range c.Items {
 		it.ColorTo(sb)
+	}
+	if len(text) > 0 {
+		_, _ = sb.WriteString(text)
+		Reset.ColorTo(sb)
 	}
 	return sb.PutBack()
 }
@@ -577,11 +604,17 @@ func (c csiGroups) TryAppend(color colorCSI) (gs csiGroups) {
 	return
 }
 
-func (c csiGroups) Color() string {
+func (c csiGroups) Color() string { return c.Wrap("") }
+
+func (c csiGroups) Wrap(text string) string {
 	var sb = NewFmtBuf()
 	c.prologue(sb)
 	c.core(sb)
 	c.epilogue(sb)
+	if len(text) > 0 {
+		_, _ = sb.WriteString(text)
+		Reset.ColorTo(sb)
+	}
 	return sb.PutBack()
 }
 
@@ -652,13 +685,19 @@ func (c csiGroupS) AddAndNew(colors ...Color) (newclr *Style) {
 	return newclr.Add(colors...)
 }
 
-func (c csiGroupS) Color() string {
+func (c csiGroupS) Color() string { return c.Wrap("") }
+
+func (c csiGroupS) Wrap(text string) string {
 	if len(c.Items) > 0 {
 		var sb = NewFmtBuf()
 		for _, cc := range c.Items {
 			cc.prologue(sb)
 			cc.core(sb)
 			cc.epilogue(sb)
+		}
+		if len(text) > 0 {
+			_, _ = sb.WriteString(text)
+			Reset.ColorTo(sb)
 		}
 		return sb.PutBack()
 	}
@@ -685,6 +724,10 @@ func (c ControlCode) core(out CWriter)      { wrString(out, c.Color()) }
 func (c ControlCode) Color() string         { return string(byte(c)) }
 func (c ControlCode) ColorTo(out io.Writer) { wrString(out, c.Color()) }
 func (c ControlCode) Int() (color int)      { return int(byte(c)) }
+
+func (c ControlCode) Wrap(text string) string {
+	return string(byte(c)) + text
+}
 
 func (c ControlCode) AddAndNew(colors ...Color) (newclr *Style) {
 	newclr = NewStyle().Add(c)
@@ -724,10 +767,14 @@ func (c FeCode) core(out CWriter)      { wrString(out, c.Color()) }
 func (c FeCode) ColorTo(out io.Writer) { wrString(out, c.Color()) }
 func (c FeCode) Int() (color int)      { return int(byte(c)) }
 
-func (c FeCode) Color() string {
+func (c FeCode) Color() string { return c.Wrap("") }
+func (c FeCode) Wrap(text string) string {
 	var sb = NewFmtBuf()
 	_ = sb.WriteByte(ESCAPE)
 	_ = sb.WriteByte(byte(c))
+	if len(text) > 0 {
+		_, _ = sb.WriteString(text)
+	}
 	return sb.PutBack()
 }
 
@@ -820,13 +867,18 @@ func (c CSICodes) core(out CWriter) {
 	}
 }
 
-func (c CSICodes) Color() string {
+func (c CSICodes) Color() string { return c.Wrap("") }
+func (c CSICodes) Wrap(text string) string {
 	var sb = NewFmtBuf()
 	if len(c.Items) > 0 {
 		// cc := c.Items[0]
 		// cc.prologue(sb)
 		c.core(sb)
 		// cc.epilogue(sb)
+	}
+	if len(text) > 0 {
+		_, _ = sb.WriteString(text)
+		Reset.ColorTo(sb)
 	}
 	return sb.PutBack()
 }
@@ -906,11 +958,16 @@ func (c CSICode) core(out CWriter) {
 	}
 }
 
-func (c CSICode) Color() string {
+func (c CSICode) Color() string { return c.Wrap("") }
+func (c CSICode) Wrap(text string) string {
 	var sb = NewFmtBuf()
 	c.prologue(sb)
 	c.core(sb)
 	c.epilogue(sb)
+	if len(text) > 0 {
+		_, _ = sb.WriteString(text)
+		Reset.ColorTo(sb)
+	}
 	return sb.PutBack()
 }
 
@@ -982,14 +1039,19 @@ func (c CSIsuffix) ending() byte         { return byte(c) }
 func (c CSIsuffix) prologue(out CWriter) { out.WriteString(csi) }
 func (c CSIsuffix) epilogue(out CWriter) { out.WriteByte(byte(c)) }
 func (c CSIsuffix) core(out CWriter)     {}
+func (c CSIsuffix) Color() string        { return c.Wrap("") }
 
 // func (c CSIsuffix) ColorTo(out io.Writer) { wrString(out, c.Color()) }
 // func (c CSIsuffix) Int() (color int)      { return int(byte(c)) }
 
-func (c CSIsuffix) Color() string {
+func (c CSIsuffix) Wrap(text string) string {
 	var sb = NewFmtBuf()
 	_, _ = sb.WriteString(csi)
 	_ = sb.WriteByte(byte(c))
+	if len(text) > 0 {
+		_, _ = sb.WriteString(text)
+		Reset.ColorTo(sb)
+	}
 	return sb.PutBack()
 }
 
@@ -1012,12 +1074,17 @@ func (c CSIsgr) core(out CWriter)      { out.WriteInt(int(byte(c))) }
 func (c CSIsgr) ColorTo(out io.Writer) { wrString(out, c.Color()) }
 func (c CSIsgr) Int() (color int)      { return int(byte(c)) }
 func (c CSIsgr) String() string        { return c.Color() }
+func (c CSIsgr) Color() string         { return c.Wrap("") }
 
-func (c CSIsgr) Color() string {
+func (c CSIsgr) Wrap(text string) string {
 	var sb = NewFmtBuf()
 	_, _ = sb.WriteString(csi)
 	_, _ = sb.WriteInt(int(byte(c)))
 	_ = sb.WriteByte('m')
+	if len(text) > 0 {
+		_, _ = sb.WriteString(text)
+		Reset.ColorTo(sb)
+	}
 	return sb.PutBack()
 }
 
