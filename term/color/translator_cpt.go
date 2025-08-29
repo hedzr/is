@@ -75,6 +75,10 @@ func (c *cpTranslator) TranslateTo(s string, initialState Color) string {
 		return c._ss(s)
 	}
 
+	if s == "" {
+		return s
+	}
+
 	if c.noLeadingSpaces {
 		node, err := html.Parse(bufio.NewReader(strings.NewReader(string(s))))
 		if err != nil {
