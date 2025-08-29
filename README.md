@@ -19,12 +19,16 @@
 - `is.ColoredTty() bool`, ....
 - `is.Color()` to get an indexer for the functions in our term/color subpackage, ...
 - Terminal Colorizer, Detector, unescape tools.
+  - `is/term/color.Color` interface
 - stringtool: `RandomStringPure`, case-converters ...
 - basics: closable, closer, signals.
   - easier `Press any key to exit...` prompt: `is.Signals().Catch()`
 - exec: Run, RunWithOutput, Sudo, ...
-- go1.23.7+ required since v0.7.0
-- ~~go 1.22.7+ required~~
+- ~~go1.23.7+ required since v0.7.0~~
+- ~~go 1.24.0+ required~~
+- go1.24.5 required since v0.8.55
+
+See the above badge to get the exact required go toolchain version.
 
 To using environment detecting utilities better and smoother, some terminal (and stringtool, basics) tools are bundled together.
 
@@ -172,6 +176,8 @@ The partials:
 - [Special] Terminal / Color
   - escaping tools: GetCPT()/GetCPTC()/GetCPTNC()
   - Highlight, Dimf, Text, Dim, ToDim, ToHighlight, ToColor, ...
+  - `color.Color` interface
+  - `color.New()` return a stream-callable color object: `color.Cursor`.
 
 - Basics
   - closers
@@ -465,6 +471,13 @@ To create a [Color](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#Co
 - by [NewSGR](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#NewSGR) or use [CSIsgr](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#CSIsgr) constants directly like [SGRdim](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#SGRdim), [SGRstrike](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#SGRstrike), ...
 - by [NewStyle](https://pkg.go.dev/github.com/hedzr/is@v0.8.31/term/color#NewStyle) to make a compounded object
 - ...
+
+As to v0.8.53, a `Color` object can wrap itself arroubd the given text:
+
+```go
+color.BgBold.Wrap(color.FgRed.Wrap("ERROR!"))
+color.BgDim.Wrap(color.FgDarkGray.Wrap("debug message here."))
+```
 
 ## Integrated with `cmdr`
 
