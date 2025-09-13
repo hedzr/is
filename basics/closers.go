@@ -75,7 +75,7 @@ func (s *c) Close() {
 	if atomic.CompareAndSwapInt32(&s.closed, 0, 1) {
 		verbose("closing registered closers...")
 		for _, c := range s.closers {
-			// log.Debugf("  c.Close(), %v", c)
+			// log.Printf("  c.Close(), %v\n", c)
 			if c != nil {
 				c.Close()
 			}
