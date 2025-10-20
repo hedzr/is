@@ -77,6 +77,7 @@ func DataDir(appName string, base ...string) string {
 		// ?
 		return filepath.Join(append([]string{dir, "lib", "data", appName}, base...)...)
 	}
+
 	if xdg := os.Getenv("XDG_DATA_HOME"); xdg != "" {
 		return filepath.Join(append([]string{xdg, appName}, base...)...)
 	}
@@ -173,6 +174,7 @@ func CacheDir(appName string, base ...string) string {
 		}
 		return filepath.Join(append([]string{dir, "lib", "cache", appName}, base...)...)
 	}
+
 	if xdg := os.Getenv("XDG_CACHE_HOME"); xdg != "" {
 		return filepath.Join(append([]string{xdg, appName}, base...)...)
 	}
