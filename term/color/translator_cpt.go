@@ -89,7 +89,7 @@ func (c *cpTranslator) TranslateTo(s string, initialState Color) string {
 	}
 
 	runes, pos := []rune(s), 0
-	for unicode.IsSpace(runes[pos]) {
+	for pos < len(runes) && unicode.IsSpace(runes[pos]) {
 		pos++
 	}
 	cs := string(runes[pos:])
