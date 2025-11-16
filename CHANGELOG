@@ -1,5 +1,8 @@
 # CHANGELOG & HISTORY
 
+- v0.8.65
+  - fix index overrange in `cpTranslator.TranslateTo()`
+
 - v0.8.63
   - security patch
 
