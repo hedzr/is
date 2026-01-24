@@ -80,7 +80,7 @@ func (c *calling) WithCommandString(cmd string, quoteChars ...rune) *calling {
 	return c
 }
 
-func (c *calling) WithCommand(cmd ...interface{}) *calling {
+func (c *calling) WithCommand(cmd ...any) *calling {
 	var args []string
 	for _, a := range cmd[1:] {
 		if as, ok := a.([]string); ok {
