@@ -4,6 +4,6 @@ const AppNameExample = "small" // appName for the current demo app
 
 const (
 	appName = "is"      // appName of hedzr/is package
-	version = "v0.8.67" // version of hedzr/is package | update it while bumping hedzr/is' version
+	version = "v0.8.68" // version of hedzr/is package | update it while bumping hedzr/is' version
 	Version = version
 )
