@@ -1,5 +1,8 @@
 # CHANGELOG & HISTORY
 
+- v0.9.0
+  - upgrade toolchain to go1.25+
+
 - v0.8.68
   - security patch
   - unimportant improvements
