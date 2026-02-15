@@ -25,8 +25,9 @@
   - easier `Press any key to exit...` prompt: `is.Signals().Catch()`
 - exec: Run, RunWithOutput, Sudo, ...
 - ~~go1.23.7+ required since v0.7.0~~
-- ~~go 1.24.0+ required~~
+- ~~go 1.25.0+ required~~
 - go1.24.5 required since v0.8.55
+- go1.25.0 required since v0.9.0
 
 See the above badge to get the exact required go toolchain version.
 
