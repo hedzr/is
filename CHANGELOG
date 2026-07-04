@@ -1,5 +1,11 @@
 # CHANGELOG & HISTORY
 
+- v0.9.3
+  - security patch
+
+- v0.9.1
+  - security patch
+
 - v0.9.0
   - upgrade toolchain to go1.25+
 
