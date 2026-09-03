@@ -5,7 +5,7 @@ go 1.25.0
 //replace github.com/hedzr/env => ../libs.env
 
 require (
-	golang.org/x/net v0.57.0
+	golang.org/x/net v0.58.0
 	golang.org/x/term v0.45.0
 )
 
