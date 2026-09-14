@@ -28,6 +28,7 @@
 - ~~go 1.25.0+ required~~
 - go1.24.5 required since v0.8.55
 - go1.25.0 required since v0.9.0
+- go1.26.0 required since v0.9.9
 
 See the above badge to get the exact required go toolchain version.
 

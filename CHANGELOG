@@ -1,5 +1,9 @@
 # CHANGELOG & HISTORY
 
+- v0.9.9
+  - security patch
+  - upgrade toolchain to go1.26+
+
 - v0.9.7
   - security patch
 
