@@ -1,5 +1,19 @@
 # CHANGELOG & HISTORY
 
+- v0.9.10
+  - security patch
+    > NOTE:
+    > When we're bump version for security patch, it means just
+    > a defensive upgrade release.
+    > You may not care about it.
+    > Because you once upgrade all dependencies from yourself
+    > go.mod, those security patches would be applies even if
+    > you're using an elder version `is`.
+    >
+    > Commonly fact is, any security patches means google
+    > pushes some new releases about its golang.org/x/...,
+    > this is why we needn't describe them any more.
+
 - v0.9.9
   - security patch
   - upgrade toolchain to go1.26+
